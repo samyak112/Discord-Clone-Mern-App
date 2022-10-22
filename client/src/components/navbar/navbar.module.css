@@ -1,0 +1,111 @@
+.main::-webkit-scrollbar {
+    width: 0px;
+  }
+
+.main{
+    background-color: hsl(216,calc((1,1)*7.2%),13.5%);
+    height: 100%;
+    color: #DCDDDE;
+    overflow-y: scroll;
+}
+/* this was made just to get some space above the first element because with any other way either there was some white space coming on the top or the box was shrinking */
+.main_wrap{
+    padding-top: 10px;
+}
+
+.list_items{
+    display: grid;
+    grid-template-columns: .3fr 2fr .5fr;
+    height: 48px;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+/* this is to get a line after the last dm box */
+.dms:last-child::after{
+    content: '';
+    width: 50%;
+    position: absolute;
+    display: flex;
+    left: 15px;
+    bottom: -20%;
+    border-bottom: 3px solid #373A3F;
+}
+
+.servers:last-child::after{
+    content: '';
+    width: 50%;
+    position: absolute;
+    display: flex;
+    left: 15px;
+    bottom: -20%;
+    border-bottom: 3px solid #373A3F;
+}
+
+#direct_message{
+    border-radius: 15px;
+}
+
+.left{
+    display: flex;
+}
+
+.selected{
+    height: 80%;
+    width: 50%;
+    display: flex;
+    align-self: center;
+    background-color: white;
+    border-radius: 0 5px 5px 0;
+}
+
+.middle{
+    background-color: #5865F2;
+    border-radius: 50%;
+    margin-left: .2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: border-radius .2s;
+}
+
+.middle:hover{
+    border-radius: 15px;
+}
+
+.server_middle{
+    background-color: #36393F;
+}
+
+.server_middle:hover{
+    background-color: #5865F2;
+}
+
+.middle img{
+    height: 100%;
+    width: 100%;
+    border-radius: 50%;
+}
+
+#plus {
+    color: #3BA55D;
+}
+
+#plus:hover{
+    background-color: #3BA55D;
+    color: white;
+}
+
+
+
+#direct_message img{
+    height: 60%;
+    width: 60%;
+    border-radius: 0;
+    /* i had to specify border radius to be 0 here because otherwise it inherits border radius from its class i.e .middle img */
+}
+
+
+
+

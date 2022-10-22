@@ -1,0 +1,133 @@
+*{
+    box-sizing: border-box;
+}
+
+#main{
+    height: 100%;
+    background-color: #36393F;
+    border-right: 1px solid hsla(217,calc((1, 1)*7.6%),33.5%,0.48);
+    position: relative;
+}
+
+#search_wrap{
+    padding: 1rem;
+}
+
+#search{
+    display: grid;
+    grid-template-columns: 95% 5%;
+    background-color: #202225;
+    color: #9B9EA2;
+    border-radius: 5px;
+}
+
+#search input{
+    background-color: #202225;
+    height: 35px;
+    border-radius: 5px;
+}
+
+#search ::placeholder{
+    color: #9B9EA2;
+}
+
+#search_icon{
+    display: flex;
+    align-items: center;
+}
+
+#online_users_count_wrap{
+    color: #A5A7AB;
+}
+
+#online_users_count{
+    padding: 1rem;
+    font-weight: 600;
+    font-size: .8rem;
+}
+
+#online_users_wrap{
+    display: flex;
+    justify-content: center;
+    /* border: 2px solid white; */
+}
+
+.online_users{
+    width: 95%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 80px auto 150px;
+    padding-top: .5rem;
+    border-top: 1px solid hsla(217,calc((1, 1)*7.6%),33.5%,0.48);
+    border-radius: 10px;
+}
+
+.online_users:hover{
+    background-color: hsla(217,calc((1, 1)*7.6%),33.5%,0.4);;
+}
+
+
+
+/* .online_comps{
+    border: 2px solid white;
+} */
+
+#item_1_wrap{
+    display: flex;
+    justify-content: center;
+}
+
+#item_1{
+    height: 3rem;
+    width: 3rem;
+}
+
+#item_1 img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    clip-path: circle();
+}
+
+#item_2{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: white;
+}
+
+#item_2_2{
+    color: #A5A7AB;
+    font-size: .8rem;
+}
+
+#item_3{
+    display: flex;
+    justify-content: center;
+}
+
+.item_3_comps_wrap{
+    display: flex;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 50%;
+    margin-left: 1rem;
+    background-color: #2F3136;
+    color: #B9BBBE;
+}
+
+/* this is here to affect the child element when parent element is hovered */
+.online_users:hover .item_3_comps_wrap{
+    background-color: rgb(31, 30, 30);
+}
+
+
+
+
+
+
+
+ 

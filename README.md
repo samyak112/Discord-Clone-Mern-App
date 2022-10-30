@@ -19,12 +19,14 @@ Back-end -
 Database - 
 
 1. Mongodb
-
-2. Firebase
+2. Azure for Image storage
 
 Current State -
 
-Right now this app only includes the login and registration capabilities and the dashboard will be added with the next commit
-
+Right now this app only includes the 
+1. login and registration 
+2. a dashboard for sending and accepting requests 
+3. to check pending requests and all friends
+4. realtime change in friends and pending requests as soon as you click on accept friend request thanks to state management
 
 

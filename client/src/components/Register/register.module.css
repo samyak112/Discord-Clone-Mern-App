@@ -196,10 +196,8 @@ ul{
 
 .otp_fiels{
     margin-bottom: 1rem;
-}
-
-.otp_fiels input{
     height: 2rem;
+    
 }
 
 .verify_button{
@@ -228,7 +226,7 @@ ul{
     /* this part is done to bring image half out of the main div */
 }
 
-input{
+.components input{
     background-color: #191b20;
     border: none;
     height: 100%;
@@ -240,7 +238,7 @@ input{
 }
 
 
-input:focus{
+.components input:focus{
     outline: none;
 }
 

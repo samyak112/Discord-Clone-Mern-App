@@ -1,12 +1,101 @@
 *{
-    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
 }
 
-#main{
+.main{
     height: 100%;
     background-color: #36393F;
     border-right: 1px solid hsla(217,calc((1, 1)*7.6%),33.5%,0.48);
     position: relative;
+    display: block;
+    /* this justify center is here for offline case it activates only when display is changed to flex through react inline css */
+    justify-content: center;
+    align-items: center;
+}
+
+.add_friend_wrap{
+    background-color: #36393F;
+    height: 100%;
+}
+
+.add_friend{
+    padding: 1.5rem;
+    border-bottom: 1px solid #565757;
+}
+
+.add_friend_comps{
+    margin-bottom: .8rem;
+}
+
+#add_friend_1{
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+#add_friend_2{
+    color: #B9BBBE;
+    font-size: .9rem;
+}
+
+#add_friend_3{
+    display: flex;
+    justify-content: space-between;
+    background-color: #202225;
+    height: 3rem;
+    border-radius: 10px;
+    
+}
+
+#add_friend_3 input{
+    margin-left: 1rem;
+    background-color: transparent;
+    border: none;
+    width: 50%;
+    color: #B9BBBE;
+    font-weight: 700;
+
+}
+
+#add_friend_3 input:focus{
+    outline: none;
+}
+
+#add_friend_3_button {
+    background-color: #2333e9;
+    border: none;
+    color: white;
+    width: 10rem;
+    margin: .5rem;
+    border-radius: 3px;
+}
+
+#add_friend_3_button:disabled{
+    background-color: #3C438B;
+    border: none;
+    color: #8E8F92;
+    cursor:not-allowed;
+}
+
+#add_friend_3_button:disabled:hover{
+    background-color: #3C438B;
+
+}
+
+#add_friend_3_button:hover{
+    background-color: #5865F2;
+}
+
+#friend_req_response{
+    display: none;
+    color: rgb(72, 188, 72);
+}
+
+.add_friend_image{
+    display: flex;
+    justify-content: center;
+    margin-top: 5rem;
 }
 
 #search_wrap{
@@ -25,6 +114,12 @@
     background-color: #202225;
     height: 35px;
     border-radius: 5px;
+    border: none;
+    margin-left: 1rem;
+}
+
+#search input:focus{
+    outline: none;
 }
 
 #search ::placeholder{
@@ -49,7 +144,6 @@
 #online_users_wrap{
     display: flex;
     justify-content: center;
-    /* border: 2px solid white; */
 }
 
 .online_users{
@@ -57,20 +151,20 @@
     height: 100%;
     display: grid;
     grid-template-columns: 80px auto 150px;
-    padding-top: .5rem;
+    padding-top: .3rem;
+    padding-bottom: .3rem;
+    padding-right: 1rem;
+    padding: .3rem 1rem .3rem 0rem;
     border-top: 1px solid hsla(217,calc((1, 1)*7.6%),33.5%,0.48);
     border-radius: 10px;
+    cursor: pointer;
+    /* border: 2px solid white; */
 }
 
 .online_users:hover{
     background-color: hsla(217,calc((1, 1)*7.6%),33.5%,0.4);;
 }
 
-
-
-/* .online_comps{
-    border: 2px solid white;
-} */
 
 #item_1_wrap{
     display: flex;
@@ -89,11 +183,16 @@
     clip-path: circle();
 }
 
+.item_2_main{
+    display: flex;
+}
+
 #item_2{
     display: flex;
     flex-direction: column;
     justify-content: center;
     color: white;
+    width: fit-content;
 }
 
 #item_2_2{
@@ -101,9 +200,22 @@
     font-size: .8rem;
 }
 
+#item_2_3{
+    display: none;
+}
+
+.online_users:hover  #item_2_3{
+    display: flex;
+    color: #A5A7AB;
+    font-size: .9rem;
+    height: 100%;
+    font-weight: 600;
+    margin-top: .3rem;
+}
+
 #item_3{
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
 }
 
 .item_3_comps_wrap{
@@ -122,6 +234,18 @@
 /* this is here to affect the child element when parent element is hovered */
 .online_users:hover .item_3_comps_wrap{
     background-color: rgb(31, 30, 30);
+}
+
+/* offline css */
+.offline_image{
+    height: 50%;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    font-size: .9rem;
+    color: #A3A6AA;
+    align-items: center;
 }
 
 

@@ -1,0 +1,92 @@
+while(checking == false){
+    if(current_checker == 1){
+      if(friends.length!=0){
+        console.log(friends[0].id, 'this is just checking')
+        for(let i=0 ; i<friends.length;i++){
+          if(id == friends[i].id){
+            checking=true
+            console.log('already friends')
+            // break
+          }
+          else{
+            console.log('going to checker 2 from this else')
+            current_checker=2;
+          }
+        }
+      }
+      else{
+        console.log('going to checker 2')
+        current_checker=2;
+      }
+    }
+    else if(current_checker == 2){
+      if(outgoing_reqs.length!=0){
+        for(let i=0 ; i<outgoing_reqs.length;i++){
+          if(id == outgoing_reqs[i].id){
+            checking=true
+            console.log('now friends because that user also sent you a request')
+          }
+          else{
+            console.log('going to checker 3 from this else')
+            current_checker=3;
+          }
+        }
+      }
+      else{
+        console.log('going to checker 3')
+        current_checker=3;
+      }
+    }
+
+    else if(current_checker == 3){
+      if(incoming_reqs.length!=0){
+        for(let i=0 ; i<incoming_reqs.length;i++){
+          if(id == incoming_reqs[i].id){
+            checking=true
+            console.log('request alreay sent')
+          }
+          else{
+            checking=true
+            console.log('checked everything')
+          }
+        }
+      }
+      else{
+        checking=true
+        console.log('last else condition')
+        // idhar fir friend banane vala code daal dunga
+      }
+    }
+  }
+
+  function checking_reqs(ids , user_id , current_checker){
+  if(ids.length!=0){
+    for(let i=0 ; i<ids.length;i++){
+      if(user_id == ids[i].id){
+        console.log('already friends')
+        return{checking:true}
+      }
+      
+      else{
+        if(current_checker==3){
+          return {checking:true}
+        }
+        else{
+          console.log('going to checker 2 from this else')
+          return {current_checker:2}
+        }
+        
+      }
+    }
+  }
+  else{
+    if(current_checker==3){
+      console.log('last checking condition')
+      return {checking:true}
+    }
+    else{
+      console.log('going to checker 2 from this else')
+      return {current_checker:2}
+    }
+  }
+}

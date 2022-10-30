@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit'
-import counterReducer from './counterSlice'
+import auth from './counterSlice'
+import options from './options_slice'
 
 export default configureStore({
   reducer: {
-    isauthorized: counterReducer,
+    isauthorized: auth,
+    selected_option:options,
   },
 })

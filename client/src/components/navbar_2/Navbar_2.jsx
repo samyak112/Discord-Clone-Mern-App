@@ -9,35 +9,51 @@ import offline_icon from '../../images/offline_status.svg'
 import SettingsIcon from '@mui/icons-material/Settings';
 import HeadsetIcon from '@mui/icons-material/Headset';
 import MicOffIcon from '@mui/icons-material/MicOff';
-
-const renderTooltip = (props) => (
-  <Tooltip id="button-tooltip" {...props}>
-    Create DM
-  </Tooltip>
-);
-
-const settings = (props) => (
-  <Tooltip id="button-tooltip" {...props}>
-    User Settings
-  </Tooltip>
-);
-
-const headset = (props) => (
-  <Tooltip id="button-tooltip" {...props}>
-    Deafen
-  </Tooltip>
-);
-
-const mic = (props) => (
-  <Tooltip id="button-tooltip" {...props}>
-    Unmute
-  </Tooltip>
-);
-
-
-
+import jwt from 'jwt-decode'
+import { useState } from 'react';
+import { useEffect } from 'react';
 
 function Navbar_2() {
+  try{
+    var token1 = localStorage.getItem('token')
+    var user_creds = jwt(token1);
+    setuser_details({ ...user_details, username:user_creds.username , tag:user_creds.tag , profile_pic:user_creds.profile_pic })
+  }
+  catch{
+    // console.log('logged out')
+  }
+
+  useEffect(()=>{
+    setuser_details({ ...user_details, username:user_creds.username , tag:user_creds.tag,profile_pic:user_creds.profile_pic })
+  },user_creds)
+
+  const [user_details, setuser_details] = useState({username:'',tag:'',profile_pic:''})
+
+  const renderTooltip = (props) => (
+    <Tooltip id="button-tooltip" {...props}>
+      Create DM
+    </Tooltip>
+  );
+  
+  const settings = (props) => (
+    <Tooltip id="button-tooltip" {...props}>
+      User Settings
+    </Tooltip>
+  );
+  
+  const headset = (props) => (
+    <Tooltip id="button-tooltip" {...props}>
+      Deafen
+    </Tooltip>
+  );
+  
+  const mic = (props) => (
+    <Tooltip id="button-tooltip" {...props}>
+      Unmute
+    </Tooltip>
+  );
+  
+
   return (
     <div className={nav2css.main}>
       <div>
@@ -69,7 +85,7 @@ function Navbar_2() {
         <div className={nav2css.friend_details}>
           <div className={nav2css.friend_details_comps} id={nav2css.profile_wrap}>
             <div className={nav2css.profile_pic}>
-              <img src={discord_logo} alt="" />
+              <img src={user_creds.profile_pic} alt="" />
               <div className={nav2css.online_status}>
                 <img src={offline_icon} className={nav2css.offline_icon} alt="" />
                 {/* <TripOriginIcon className={nav2css.offline_icon}></TripOriginIcon> */}
@@ -79,19 +95,7 @@ function Navbar_2() {
           <div className={`${nav2css.friend_details_comps} ${nav2css.name}`}>spidy</div>
         </div>
       </div>
-      <div className={nav2css.friend_details_wrap}>
-        <div className={nav2css.friend_details}>
-          <div className={nav2css.friend_details_comps} id={nav2css.profile_wrap}>
-            <div className={nav2css.profile_pic}>
-              <img src={discord_logo} alt="" />
-              <div className={nav2css.online_status}>
-                <img src={offline_icon} className={nav2css.offline_icon} alt="" />
-              </div>
-            </div>
-          </div>
-          <div className={`${nav2css.friend_details_comps} ${nav2css.name}`} >spidy</div>
-        </div>
-      </div>
+  
       </div>
       {/* this div above is here just to seprate above part with the lower part using a grid */}
       <div id={nav2css.footer}>
@@ -99,8 +103,8 @@ function Navbar_2() {
           <img src={discord_logo} alt="" />
         </div>
         <div id={nav2css.profile_name_wrap} className={nav2css.footer_comps}>
-          <div id={nav2css.profile_name} className={nav2css.profile_name_comps}>Spidy</div>
-          <div id={nav2css.tag} className={nav2css.profile_name_comps}>#9106</div>
+          <div id={nav2css.profile_name} className={nav2css.profile_name_comps}>{user_details.username}</div>
+          <div id={nav2css.tag} className={nav2css.profile_name_comps}>#{user_details.tag}</div>
         </div>
         <div id={nav2css.profile_options} className={nav2css.footer_comps}>
           <div className={nav2css.icons}>

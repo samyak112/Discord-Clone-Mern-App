@@ -109,7 +109,7 @@
 
 }
 
-input{
+.components input{
     background-color: #191b20;
     border: none;
     height: 100%;
@@ -120,7 +120,7 @@ input{
     text-indent: 1rem;
 }
 
-input:focus{
+.components input:focus{
     outline: none;
 }
 

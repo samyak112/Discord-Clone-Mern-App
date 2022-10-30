@@ -331,7 +331,7 @@ function Register() {
                     <div className={registercss.modal_message}>
                         We have sent a verification code on your email that you used to register kindly check.
                     </div>
-                    <div className={registercss.otp_fiels}>
+                    <div  className={`${registercss.components} ${registercss.otp_fiels}`}>
                         <input type="text" onChange={handle_otp} name='otp' placeholder='enter OTP here' value={otp_value} />
                     </div>
                     <div className={registercss.verify_button}>

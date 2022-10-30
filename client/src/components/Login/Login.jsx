@@ -101,7 +101,7 @@ function Login() {
             <div className={login_css.components} id={login_css.item_2}>We're so excited to see you again</div>
             <div className={`${login_css.components} ${login_css.font_styles} ${login_css.input_labels}`} id={login_css.item_3}>EMAIL</div>
             <div className={`${login_css.components} ${login_css.text_input_fields}`} id={login_css.item_4}>
-                <input onChange={handle_user_values} name='email' value={user_values.email} type="email" required />
+                <input  onChange={handle_user_values} name='email' value={user_values.email} type="email" required />
             </div>
             <div className={`${login_css.components} ${login_css.font_styles} ${login_css.input_labels}`} id={login_css.item_5}>
                PASSWORD

@@ -29,7 +29,29 @@ var user_details = new mongoose.Schema({
     email: String,
     password: String,
     dob: String,
+    profile_pic : String,
     authorized:Boolean,
+    incoming_reqs: [{
+      id:String,
+      username:String,
+      profile_pic:String,
+      tag:String,
+      status:String
+    }],
+    outgoing_reqs:[{
+      id:String,
+      username:String,
+      profile_pic:String,
+      tag:String,
+      status:String
+
+    }],
+    friends : [{
+      id:String,
+      username:String,
+      profile_pic:String,
+      tag:String
+    }],
     verification : [{
       timestamp : Number,
       code:String
@@ -140,24 +162,23 @@ function signup(email,username,password,dob){
         // this if condition validates the form in case js is off in some browser it also checks if password length is less than 7
         if(username== '' || email=='' || password =='' || dob==''){
           console.log('entries wrong')
-          response = {message:'wrong input', status : 204};
+          const response = {message:'wrong input', status : 204};
           resolve(response) ;
         }
         else if(password.length<7){
           console.log('password length not enough')
-          response = {message:'password length', status : 400};
+          const response = {message:'password length', status : 400};
           resolve(response) ;
         }
         else{
-          let response = {message:true};
-          console.log(response,'new user')
+          const response = {message:true};
           resolve (response);
         }
       }
       else {
         if(data[0].authorized == true){
           console.log('user already exists')
-          response = {message:'user already exists', status : 202};
+          const response = {message:'user already exists', status : 202};
           resolve(response) ;
           // res.status(202).json({message:'user already exists' , status : 202})
         }
@@ -165,24 +186,24 @@ function signup(email,username,password,dob){
           current_time_stamp =  data[0].verification[0].timestamp
           if(data[0].username != username && ((Date.now())-current_time_stamp ) < 120000){
             // TLE = time limit exceeded
-            let response = {message:'not_TLE' , otp:data[0].verification[0].code};
+            const response = {message:'not_TLE' , otp:data[0].verification[0].code};
             resolve(response) ;
           }
   
           //updated account creds without changing otp because otp is not expired yet and someone tried to fill the form again with same email address
           else if( data[0].username == username && ((Date.now())-current_time_stamp ) < 120000){
-            let response = {message:'not_TLE_2' , otp:data[0].verification[0].code , tag: data[0].tag};
+            const response = {message:'not_TLE_2' , otp:data[0].verification[0].code , tag: data[0].tag};
             resolve (response) ;
           }
   
           //updated account creds with changing otp because otp is expired and someone tried to fill the form again with same email address
           else if( data[0].username == username && ((Date.now())-current_time_stamp ) > 120000){
-            let response = {message:'TLE' , tag: data[0].tag};
+            const response = {message:'TLE' , tag: data[0].tag};
             resolve (response) ;
           }
   
           else if( data[0].username != username && ((Date.now())-current_time_stamp ) > 120000){
-            let response = {message:'TLE_2'};
+            const response = {message:'TLE_2'};
             resolve (response) ;
           }
         }
@@ -232,7 +253,7 @@ const authToken = async(req,res,next)=>{
 }
 
 app.post('/verify_route' , authToken,(req,res) =>{
-  console.log('authorizing routes')
+  // console.log('authorizing routes')
   // console.log('kitni baar chla ye getdata')
   res.status(201).json({message:'authorized',status:201});
 })
@@ -255,7 +276,7 @@ app.post('/signup',async (req,res)=>{
     let final_tag = username_response.final_tag
 
     // here we saved those values in the new user to be saved in database 
-    var new_user = new user({ username: username, tag: final_tag , email: email,password:password, dob: dob,authorized:authorized,verification : [{
+    var new_user = new user({ username: username, tag: final_tag , profile_pic:process.env.default_profile_pic  , email: email,password:password, dob: dob,authorized:authorized,verification : [{
       timestamp : Date.now(),
       code:otp
     }] });
@@ -376,7 +397,7 @@ app.post('/signin', function (req, res) {
     else {
       if (req.body.password == data[0].password) {
           if (data[0].authorized == true) {
-            const token = jwt.sign({id:data[0].id , username:data[0].username},process.env.ACCESS_TOKEN)
+            const token = jwt.sign({id:data[0].id , username:data[0].username ,tag:data[0].tag, profile_pic:data[0].profile_pic},process.env.ACCESS_TOKEN)
             res.status(201).json({message:'you are verified',status:201 , token:token});
             console.log('you are verified')
           }
@@ -391,6 +412,204 @@ app.post('/signin', function (req, res) {
       }
     }
   })
+})
+
+function check_req(ids , user_id){
+  if(ids.length!=0){
+    for(let i=0 ; i<ids.length;i++){
+      if(user_id == ids[i].id){
+        return true
+      }
+      else{
+        return false
+      }
+    }
+  }
+  else{
+    return false
+  }
+}
+
+function add_friend(user_data , friend_data){
+  const{friend_id , friend_username , friend_tag , friend_profile_pic} = friend_data
+  const {id , username , tag , profile_pic} = user_data
+
+  return new Promise((resolve,reject)=>{
+    console.log('adding friend....')
+    let user_friends_list = { $push: {friends:[{
+      id:friend_id,
+      username: friend_username,
+      profile_pic: friend_profile_pic,
+      tag: friend_tag,
+    }]} };
+
+    let friend_friends_list = { $push: {friends:[{
+      id:id,
+      username: username,
+      profile_pic: profile_pic,
+      tag: tag,
+    }]} };
+
+      // for reciever's db delete request from incoming field
+    let delete_incoming =  { $pull: {incoming_reqs: {id:friend_id}} };
+
+    // for sender's db delete request from outgoing field
+    let delete_outgoing =  { $pull: {outgoing_reqs: {id:id}} };
+
+    let param_arr=  [user_friends_list , friend_friends_list]
+    let param_arr_2 = [delete_incoming , delete_outgoing]
+    let id_arr = [id , friend_id]
+
+    for(let i = 0 ; i<2 ; i++){
+      user.updateOne({ _id: id_arr[i] }, param_arr[i], function (err, result) {
+        if (err){
+          reject({message:'something went wrong' , status:404})
+          throw err;
+        } 
+        });
+
+      user.updateOne({_id:id_arr[i]},param_arr_2[i],function(err,result){
+        if (err){
+          reject({message:'something went wrong' , status:404})
+          console.log(err)
+        } 
+      })
+    }
+    resolve({message:'friend added' , status:200})
+  })
+}
+
+
+app.post('/add_friend',async function(req,res){
+  let friend = req.body.friend
+  let friend_length = friend.length
+  let hash_index = friend.indexOf("#");
+  let name = friend.slice(0,hash_index)
+  let user_tag = friend.slice(hash_index+1,friend_length)
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+  const {id , username , tag , profile_pic} = user_id
+
+  const isuserexists  = new Promise((resolve,reject)=>{
+    user.find({username:name, tag:user_tag},function(err,data){
+      if(err){
+        reject(err,'something wrong in add_friend endpoint')
+      }
+      else{
+        if(data.length==0){
+          resolve(false)
+        }
+        else{
+          // console.log(data[0].incoming_reqs)
+          resolve({response:true,friend_id:data[0].id , friend_username : data[0].username , friend_tag: data[0].tag , friend_profile_pic:data[0].profile_pic , outgoing_reqs:data[0].outgoing_reqs , incoming_reqs:data[0].incoming_reqs,
+          friends:data[0].friends})
+        }
+      }
+    }).clone()
+  })
+  
+  let result = await isuserexists
+
+  const{incoming_reqs , outgoing_reqs , friends , response , friend_id , friend_username , friend_tag , friend_profile_pic} = result
+  
+
+  if(response == false){
+    res.status(404).json({message:'User Not found',status:404});
+  }
+  else{
+    const friend_list = check_req(friends , id)
+
+    if(friend_list == true){
+      console.log('already friends')
+      res.status(201).json({message:'You are already friends with this user',status:201});
+    }
+    else{
+      const outgoing_list = check_req(outgoing_reqs , id)
+      if(outgoing_list==true){
+        const response = await add_friend(user_id , result)
+        console.log('friends now')
+        // here we will add that user to friend list and not send the request again , this message is only for user simplicity
+        res.status(201).json({message:'Request sent successfully',status:201});
+      }
+      else{
+        const incoming_list = check_req(incoming_reqs , id)
+        if(incoming_list == true){
+          console.log('request alreay sent')
+          res.status(202).json({message:'Request already sent',status:202});
+        }
+        else{
+           let sending_req = { $push: {'incoming_reqs':[{
+            // got these after destructuring the object user_id
+            id: id,
+            username: username,
+            profile_pic: profile_pic,
+            tag: tag,
+            status:'incoming'
+          }]} };
+  
+          let sending_req_2 = { $push: {'outgoing_reqs':[{
+            id:friend_id,
+            username: friend_username,
+            profile_pic: friend_profile_pic,
+            tag: friend_tag,
+            status:'outgoing'
+          }]} };
+  
+  
+          if(response == true){
+            // this update will be done in the data of the receiveing user
+            user.updateOne({ _id: friend_id }, sending_req, function (err, result) {
+              if (err) throw err;
+              else {
+                console.log('request sent')
+              }
+            });
+  
+            // this update will be done in the data of the sending user
+            user.updateOne({ _id: id }, sending_req_2, function (err, result) {
+              if (err) throw err;
+            });
+          }
+          res.status(203).json({message:'Request sent successfully',status:203});
+        }
+      }
+    }
+  }
+})
+
+app.post('/user_relations', async function(req,res){
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+  const result = await user.find({_id:user_id.id})
+  const {incoming_reqs , outgoing_reqs , friends} = result[0]
+  res.status(201).json({incoming_reqs:incoming_reqs , outgoing_reqs:outgoing_reqs , friends: friends});
+
+})
+
+app.post('/process_req',async function(req,res){
+  const {message , friend_data} = req.body
+  const {id , profile_pic , tag , username} = friend_data
+  final_friend_data = {friend_id:id , friend_profile_pic:profile_pic , friend_tag:tag , friend_username:username}
+  // had to transfer the friend data to final friend data because in the function add_friend i am using destructuring and keys have to be according to that
+
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+  if(message == 'Accept'){
+    const result = await add_friend(user_id , final_friend_data)
+    const {message , status} = result
+    res.status(status).json({message:message , status:status});
+  }
+  else if(message == 'Ignore'){
+    console.log('will do something about ignore')
+  }
+  else if(message == 'Unblock'){
+    console.log('will do something about Unblock')
+  }
+  else if(message == 'Cancel'){
+    console.log('will do something about Cancel')
+  }
 })
 
 app.listen(port, () => {

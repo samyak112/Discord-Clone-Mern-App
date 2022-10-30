@@ -22,16 +22,13 @@ const Auth = (props) => {
                 'x-auth-token':localStorage.getItem('token')
             }
         })
-        console.log('is this even running?')
         const data = await res.json();
         
         if(data.status == 201){
             {dispatch(increment())}
-            console.log('came here')
         }
         else{
             {dispatch(decrement())}
-            console.log('naah came here')
         }
 
     }
@@ -42,23 +39,19 @@ const Auth = (props) => {
         private_routes()
     })
 
-    console.log(auth_check,'this is checking one')
 
     if (auth_check == true) {
         if(props.children.type.name == 'Login'){
-            console.log('nayi condition me')
             Navigate('/channels/@me')
             return <Dashboard/>
         }
         else{
-            console.log('i also came here')
             return props.children
         }
        
     } 
 
     else {
-        console.log('ok not authorized pip pip')
         // Navigate('/')
         return <Login/>
         }

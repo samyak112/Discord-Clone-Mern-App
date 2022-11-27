@@ -20,7 +20,7 @@ function App() {
                 </Auth>}>
             </Route>
             <Route exact path="/register" element={<Register/>}></Route>
-            <Route exact path="/channels/@me" 
+            <Route exact path="/channels/:server_id" 
                 element={
                 <Auth>
                   <Dashboard/>

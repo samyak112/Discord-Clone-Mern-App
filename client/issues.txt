@@ -1,0 +1,1 @@
+1. If a link is directly pasted in browser with an ID of a channel which user doesnt have access too he will still be able to check all the data at that address because there is no checking at the moment to check that if the user have access to a particular server

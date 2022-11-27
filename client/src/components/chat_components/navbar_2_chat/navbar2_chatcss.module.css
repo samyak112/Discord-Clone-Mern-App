@@ -1,0 +1,128 @@
+.server_name{
+    position: relative;
+    border-bottom: 1px solid #232427;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    color: white;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.server_name:hover{
+    background-color: #4F545C66;
+}
+
+.options_wrap{
+    position: absolute;
+    top: 4rem;
+    left: .7rem;
+    color: white;
+    background-color: #18191C;
+    border-radius: 5px;
+    padding: .5rem;
+    width: 90%;
+}
+
+.options{
+    display: flex;
+    justify-content: space-between;
+    padding: .5rem;
+    font-weight: 400;
+    font-size: .8rem;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.options:hover{
+    background-color: blueviolet;
+}
+
+#modal_main_wrap{
+    max-width: 450px;
+}
+
+
+.modal_main{
+    background-color: #36393F;
+    padding: 1rem;    
+}
+
+.modal_comps{
+    margin-bottom: .5rem;
+}
+
+#modal_header{
+    margin-bottom: 1rem;
+}
+
+#primary_heading{
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 650;
+}
+
+#channel_name{
+    color: white;
+    font-size: .8rem;
+    font-weight: 600;
+    margin-block: 1rem;
+    
+}
+
+.input_div{
+    display: flex;
+    align-items: center;
+    background-color: #202225;
+    margin-top: .5rem;
+    border-radius: 5px;
+    padding: .5rem;
+}
+
+#channel_name input{
+    background-color: #202225;
+    border: none;
+    width: 100%;
+    text-indent: .5rem;
+    caret-color: white;  
+    font-size: 1rem;
+    color: #A0A3A6
+}
+
+#channel_name input:focus{
+    outline: none;
+}
+
+#channel_name input::placeholder{
+    font-size: 1rem;
+}
+
+#modal_buttons{
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    align-items: center;
+}
+
+.buttons{
+    cursor: pointer;
+}
+
+#cancel_button{
+    background-color: inherit;
+    border: none;
+    color: white;
+}
+
+#create_button{
+    border: none;
+    color: white;
+    background-color: blue;
+    padding: .3rem;
+    border-radius: 3px;
+}
+
+#create_button:hover{
+    background-color: rgb(71, 71, 243);
+}

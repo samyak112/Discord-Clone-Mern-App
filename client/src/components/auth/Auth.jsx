@@ -13,9 +13,10 @@ const Auth = (props) => {
     const auth_check = useSelector(state => state.isauthorized.value)
     const dispatch = useDispatch();
 
+    const url = process.env.REACT_APP_URL
 
     const private_routes = async() =>{
-        const res = await fetch('/verify_route',{
+        const res = await fetch(`${url}/verify_route`,{
             method:'POST',
             headers:{
                 'Content-Type' : 'application/json',

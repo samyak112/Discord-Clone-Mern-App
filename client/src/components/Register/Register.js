@@ -40,6 +40,8 @@ function Register() {
     const months = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
     ];
+    const url = process.env.REACT_APP_URL
+
     
     const register_req = async(e) => {
       e.preventDefault();
@@ -62,7 +64,7 @@ function Register() {
 
             const {email,password,username} = user_values;
 
-            const res = await fetch('/signup',{
+            const res = await fetch(`${url}/signup`,{
                 method:'POST',
                 headers:{
                     'Content-Type' : 'application/json',
@@ -130,7 +132,7 @@ function Register() {
     const verify_req = async(e) =>{
         e.preventDefault()
 
-        const res = await fetch('/verify',{
+        const res = await fetch(`${url}/verify`,{
             method:'POST',
             headers:{
                 'Content-Type' : 'application/json',

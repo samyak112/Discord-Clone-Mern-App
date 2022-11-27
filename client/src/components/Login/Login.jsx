@@ -16,6 +16,7 @@ function Login() {
     const [user_values, setuser_values] = useState({email:'',password:''})
     const [alert_box, setalert_box] = React.useState(false);
     const [alert_message, setalert_message] = useState('');
+    const url = process.env.REACT_APP_URL
 
 
     const handle_user_values = (e) => {
@@ -28,7 +29,7 @@ function Login() {
         e.preventDefault();
               const {email,password} = user_values;
     
-              const res = await fetch('/signin',{
+              const res = await fetch(`${url}/signin`,{
                   method:'POST',
                   headers:{
                       'Content-Type' : 'application/json',
@@ -52,6 +53,7 @@ function Login() {
               else if(data.status === 201){
                 localStorage.setItem('token', data.token);
                 console.log('succesfully logged in')
+                
                 Navigate('/channels/@me')
                  
               }

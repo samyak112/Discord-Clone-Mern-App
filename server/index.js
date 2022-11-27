@@ -2,16 +2,22 @@ const express = require('express')
 const app = express()
 const http = require('http')
 require('dotenv').config()
-const body_parser = require('body-parser');
 const port = process.env.PORT || 3080;
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken')
+const cors = require('cors')
 
-app.use(body_parser.json());
-app.use(body_parser.urlencoded({ extended: false }));
+app.use(cors())
+app.use(express.json({limit:'10kb'}))
+app.use(express.urlencoded({extended:true,limit:'10kb'}))
 const server = http.createServer((req, res) => {
   console.log('hellow world')
 })
+
+app.listen(port, () => {
+  console.log(`listening on port ${port}`)
+})
+
 
 // mogoose config
 const mongoose = require('mongoose');
@@ -31,6 +37,12 @@ var user_details = new mongoose.Schema({
     dob: String,
     profile_pic : String,
     authorized:Boolean,
+    servers:[{
+      server_name:String,
+      server_pic:String,
+      server_role:String,
+      server_id:String
+    }],
     incoming_reqs: [{
       id:String,
       username:String,
@@ -44,7 +56,6 @@ var user_details = new mongoose.Schema({
       profile_pic:String,
       tag:String,
       status:String
-
     }],
     friends : [{
       id:String,
@@ -52,9 +63,11 @@ var user_details = new mongoose.Schema({
       profile_pic:String,
       tag:String
     }],
-    verification : [{
-      timestamp : Number,
-      code:String
+    blocked : [{
+      id:String,
+      username:String,
+      profile_pic:String,
+      tag:String
     }],
     verification : [{
       timestamp : Number,
@@ -64,15 +77,35 @@ var user_details = new mongoose.Schema({
   },{ typeKey: '$type' })
 
   var user_name_details = new mongoose.Schema({
-    user_name:[{
       name:String,
       count:Number
-    }]
+  })
+
+  var servers = new mongoose.Schema({
+    server_name:String,
+    server_pic:String,
+    users:[{
+      user_name:String,
+      user_profile_pic:String,
+      user_tag:String,
+      user_id:String,
+      user_role:String
+    }],
+    categories:[{
+      category_name:String,
+      channels:[{
+        channel_name:String,
+        channel_type:String
+      }]
+    }],
+    active:Boolean
   })
   
   // user
   var user = mongoose.model('discord_user', user_details);
   var username_details = mongoose.model('discord_username', user_name_details);
+  var servers = mongoose.model('discord_server', servers);
+
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
@@ -105,7 +138,6 @@ function send_mail(otp,mail_value,name_value){
 }
 
 function generateOTP() {
-  console.log('generating otp')
   var digits = '0123456789';
   let otp = '';
   for (let i = 0; i < 4; i++ ) {
@@ -116,26 +148,36 @@ function generateOTP() {
 
 function isusername_available(username){
   return new Promise ((resolve,reject)=>{
-    username_details.find({"user_name.name":username},function(err,data){
+    console.log('inside username')
+    username_details.find({name:username},function(err,data){
       var count_value = 0;
-      console.log('inside username function')
       if(err){
          console.log('here is the error')
        }
        else{
          if(data.length==0){
-           var add_user_name = { $push: {user_name:[{name:username , count:1}]}}
+          console.log('inside conidtion onww')
+          //  var add_user_name = { $push: {user_name:[{name:username , count:1}]}}
            var count_value = 1
-           username_details.updateOne({_id:process.env.username_id},add_user_name,function(err,result){
-             if (err) console.log(err)
-             else{
-             }
-           })
+           var add_new_username = new username_details({name:username , count:1});
+    
+          // here we saved users details
+          add_new_username.save(function (err_2, data_2) {
+            if (err_2) return console.error(err_2);
+            else {console.log(data_2) }
+          });
+          //  username_details.updateOne({_id:process.env.username_id},add_user_name,function(err,result){
+          //    if (err) console.log(err)
+          //    else{
+          //     console.log(result)
+          //    }
+          //  })
          }
          else{
-           var count_value = data[0].user_name[0].count+1
-           var add_user_name = { $set: {user_name:[{name:username , count:count_value}]}}
-           username_details.updateOne({_id:process.env.username_id},add_user_name,function(err,result){
+          console.log('else')
+           var count_value = data[0].count+1
+           var add_user_name = { $set: {name:username , count:count_value}}
+           username_details.updateOne({name:username},add_user_name,function(err,result){
              if (err) console.log(err)
              else{
              }
@@ -158,7 +200,6 @@ function signup(email,username,password,dob){
   return new Promise((resolve,reject)=>{
     user.find({ email: email }, function (err, data) {
       if (data.length == 0) {
-        console.log('inside signup')
         // this if condition validates the form in case js is off in some browser it also checks if password length is less than 7
         if(username== '' || email=='' || password =='' || dob==''){
           console.log('entries wrong')
@@ -230,9 +271,7 @@ function updating_creds(account_creds,otp,email,username){
 }
 
 function generatetag(count_value){
-  console.log('generating tag')
   var default_value = '0000'
-  console.log(count_value,'here i am')
   var count_value_str =  count_value.toString();
   var count_length = count_value_str.length;
   var final_str_1 = default_value.slice(0,default_value.length-count_length)
@@ -248,13 +287,10 @@ const authToken = async(req,res,next)=>{
     
   } catch (err) {
     res.status(400).json({message:'not right',status:400});
-    console.log('not authorized')
   }
 }
 
 app.post('/verify_route' , authToken,(req,res) =>{
-  // console.log('authorizing routes')
-  // console.log('kitni baar chla ye getdata')
   res.status(201).json({message:'authorized',status:201});
 })
 
@@ -283,7 +319,6 @@ app.post('/signup',async (req,res)=>{
 
     // if the user doesnot exist we send a verification code to verify that the email entered is not fake 
     send_mail(otp,email,username)
-    console.log('in saving')
 
     // here we saved users details
     new_user.save(function (err_2, data_2) {
@@ -484,107 +519,112 @@ app.post('/add_friend',async function(req,res){
   let friend = req.body.friend
   let friend_length = friend.length
   let hash_index = friend.indexOf("#");
-  let name = friend.slice(0,hash_index)
-  let user_tag = friend.slice(hash_index+1,friend_length)
-  const authHeader = req.headers['x-auth-token']
-  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-
-  const {id , username , tag , profile_pic} = user_id
-
-  const isuserexists  = new Promise((resolve,reject)=>{
-    user.find({username:name, tag:user_tag},function(err,data){
-      if(err){
-        reject(err,'something wrong in add_friend endpoint')
-      }
-      else{
-        if(data.length==0){
-          resolve(false)
-        }
-        else{
-          // console.log(data[0].incoming_reqs)
-          resolve({response:true,friend_id:data[0].id , friend_username : data[0].username , friend_tag: data[0].tag , friend_profile_pic:data[0].profile_pic , outgoing_reqs:data[0].outgoing_reqs , incoming_reqs:data[0].incoming_reqs,
-          friends:data[0].friends})
-        }
-      }
-    }).clone()
-  })
-  
-  let result = await isuserexists
-
-  const{incoming_reqs , outgoing_reqs , friends , response , friend_id , friend_username , friend_tag , friend_profile_pic} = result
-  
-
-  if(response == false){
-    res.status(404).json({message:'User Not found',status:404});
+  if(hash_index==-1){
+    res.status(400).json({message:'Invalid Input',status:400});
   }
   else{
-    const friend_list = check_req(friends , id)
+    let name = friend.slice(0,hash_index)
+    let user_tag = friend.slice(hash_index+1,friend_length)
+    const authHeader = req.headers['x-auth-token']
+    const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
 
-    if(friend_list == true){
-      console.log('already friends')
-      res.status(201).json({message:'You are already friends with this user',status:201});
-    }
-    else{
-      const outgoing_list = check_req(outgoing_reqs , id)
-      if(outgoing_list==true){
-        const response = await add_friend(user_id , result)
-        console.log('friends now')
-        // here we will add that user to friend list and not send the request again , this message is only for user simplicity
-        res.status(201).json({message:'Request sent successfully',status:201});
-      }
-      else{
-        const incoming_list = check_req(incoming_reqs , id)
-        if(incoming_list == true){
-          console.log('request alreay sent')
-          res.status(202).json({message:'Request already sent',status:202});
+    const {id , username , tag , profile_pic} = user_id
+
+    const isuserexists  = new Promise((resolve,reject)=>{
+      user.find({username:name, tag:user_tag},function(err,data){
+        if(err){
+          reject(err,'something wrong in add_friend endpoint')
         }
         else{
-           let sending_req = { $push: {'incoming_reqs':[{
-            // got these after destructuring the object user_id
-            id: id,
-            username: username,
-            profile_pic: profile_pic,
-            tag: tag,
-            status:'incoming'
-          }]} };
-  
-          let sending_req_2 = { $push: {'outgoing_reqs':[{
-            id:friend_id,
-            username: friend_username,
-            profile_pic: friend_profile_pic,
-            tag: friend_tag,
-            status:'outgoing'
-          }]} };
-  
-  
-          if(response == true){
-            // this update will be done in the data of the receiveing user
-            user.updateOne({ _id: friend_id }, sending_req, function (err, result) {
-              if (err) throw err;
-              else {
-                console.log('request sent')
-              }
-            });
-  
-            // this update will be done in the data of the sending user
-            user.updateOne({ _id: id }, sending_req_2, function (err, result) {
-              if (err) throw err;
-            });
+          if(data.length==0){
+            resolve(false)
           }
-          res.status(203).json({message:'Request sent successfully',status:203});
+          else{
+            // console.log(data[0].incoming_reqs)
+            resolve({response:true,friend_id:data[0].id , friend_username : data[0].username , friend_tag: data[0].tag , friend_profile_pic:data[0].profile_pic , outgoing_reqs:data[0].outgoing_reqs , incoming_reqs:data[0].incoming_reqs,
+            friends:data[0].friends})
+          }
+        }
+      }).clone()
+    })
+    
+    let result = await isuserexists
+
+    const{incoming_reqs , outgoing_reqs , friends , response , friend_id , friend_username , friend_tag , friend_profile_pic} = result
+    
+
+    if(response == false){
+      res.status(404).json({message:'User Not found',status:404});
+    }
+    else{
+      const friend_list = check_req(friends , id)
+
+      if(friend_list == true){
+        console.log('already friends')
+        res.status(201).json({message:'You are already friends with this user',status:201});
+      }
+      else{
+        const outgoing_list = check_req(outgoing_reqs , id)
+        if(outgoing_list==true){
+          const response = await add_friend(user_id , result)
+          console.log('friends now')
+          // here we will add that user to friend list and not send the request again , this message is only for user simplicity
+          res.status(201).json({message:'Request sent successfully',status:201});
+        }
+        else{
+          const incoming_list = check_req(incoming_reqs , id)
+          if(incoming_list == true){
+            console.log('request alreay sent')
+            res.status(202).json({message:'Request already sent',status:202});
+          }
+          else{
+            let sending_req = { $push: {'incoming_reqs':[{
+              // got these after destructuring the object user_id
+              id: id,
+              username: username,
+              profile_pic: profile_pic,
+              tag: tag,
+              status:'incoming'
+            }]} };
+    
+            let sending_req_2 = { $push: {'outgoing_reqs':[{
+              id:friend_id,
+              username: friend_username,
+              profile_pic: friend_profile_pic,
+              tag: friend_tag,
+              status:'outgoing'
+            }]} };
+    
+    
+            if(response == true){
+              // this update will be done in the data of the receiveing user
+              user.updateOne({ _id: friend_id }, sending_req, function (err, result) {
+                if (err) throw err;
+                else {
+                  console.log('request sent')
+                }
+              });
+    
+              // this update will be done in the data of the sending user
+              user.updateOne({ _id: id }, sending_req_2, function (err, result) {
+                if (err) throw err;
+              });
+            }
+            res.status(203).json({message:'Request sent successfully',status:203});
+          }
         }
       }
     }
-  }
+    }
+  
 })
 
-app.post('/user_relations', async function(req,res){
+app.get('/user_relations', async function(req,res){
   const authHeader = req.headers['x-auth-token']
   const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-
   const result = await user.find({_id:user_id.id})
-  const {incoming_reqs , outgoing_reqs , friends} = result[0]
-  res.status(201).json({incoming_reqs:incoming_reqs , outgoing_reqs:outgoing_reqs , friends: friends});
+  const {incoming_reqs , outgoing_reqs , friends , servers} = result[0];
+  res.status(201).json({incoming_reqs:incoming_reqs , outgoing_reqs:outgoing_reqs , friends: friends , servers:servers});
 
 })
 
@@ -612,7 +652,228 @@ app.post('/process_req',async function(req,res){
   }
 })
 
-app.listen(port, () => {
-  console.log(`listening on port ${port}`)
+function template(user_details , server_details){
+  return new Promise((resolve,reject)=>{
+    const {name , type , image  , key , role} = server_details
+    const {id , username , tag , profile_pic} = user_details
+
+    let server_template = ''
+  
+     if(key==2){
+      server_template = new servers({
+        server_name:name,
+        server_pic:image,
+        users:[{
+          user_name: username,
+          user_profile_pic: profile_pic,
+          user_tag: tag,
+          user_role:role
+        }],
+        categories:[{
+          category_name:'Text Channels',
+          channels:[{
+            channel_name:'general',
+            channel_type:'text'
+          },
+        {
+          channel_name:'Clips and Highlights',
+          channel_type:'text'
+        }]
+        } , 
+        {
+          category_name:'Voice Channels',
+          channels:[{
+            channel_name:'Lobby',
+            channel_type:'voice'
+          },
+        {
+          channel_name:'Gaming',
+          channel_type:'voice'
+        }]
+        }
+      ]
+      })
+     }
+     
+     else if(key==3){
+      server_template = new servers({
+        server_name:name,
+        server_pic:image,
+        users:[{
+          user_name: username,
+          user_profile_pic: profile_pic,
+          user_tag: tag,
+          user_role:role
+        }],
+        categories:[{
+          category_name:'INFORMATION',
+          channels:[{
+            channel_name:'welcome and rules',
+            channel_type:'text'
+          },
+        {
+          channel_name:'announcements',
+          channel_type:'text'
+        },
+        {
+          channel_name:'resources',
+          channel_type:'text'
+        },
+        {
+          channel_name:'qwerty',
+          channel_type:'text'
+        }]
+        } , 
+        {
+          category_name:'Voice Channels',
+          channels:[{
+            channel_name:'Lounge',
+            channel_type:'voice'
+          },
+        {
+          channel_name:'Meeting Room 1',
+          channel_type:'voice'
+        },
+        {
+          channel_name:'Meeting Room 2',
+          channel_type:'voice'
+        }]
+        },
+        {
+          category_name:'TEXT CHANNELS',
+          channels:[{
+            channel_name:'general',
+            channel_type:'text'
+          },
+          {
+            channel_name:'meeting-plan',
+            channel_type:'text'
+          },
+          {
+            channel_name:'off-topic',
+            channel_type:'text'
+          }]
+        }
+      ]
+      })
+     }
+
+     else{
+      server_template = new servers({
+        server_name:name,
+        server_pic:image,
+        users:[{
+          user_name: username,
+          user_profile_pic: profile_pic,
+          user_tag: tag,
+          user_role:role
+        }],
+        categories:[{
+          category_name:'Text Channels',
+          channels:[{
+            channel_name:'general',
+            channel_type:'text'
+          }]
+        } , 
+        {
+          category_name:'Voice Channels',
+          channels:[{
+            channel_name:'general',
+            channel_type:'voice'
+          }]
+        }
+      ]
+      })
+    }
+  
+    server_template.save(function (err_2, data_2) {
+      if (err_2) return console.error(err_2);
+      else { 
+        resolve({server_name:name , server_pic:image , server_id:data_2._id})
+      }
+    });
+
+
+  })
+  
+}
+
+function add_server_to_user(id , server_details , server_role){
+  return new Promise((resolve, reject)=>{
+
+    const{server_name, server_pic , server_id} = server_details
+
+    var update_user_details = {$push:{
+      servers:[{server_name:server_name ,server_pic:server_pic , server_role:server_role , server_id:server_id}]
+    }}
+
+    user.updateOne({_id:id}, update_user_details , function(err,data){
+      if(err) console.log(err)
+      else{
+        resolve(true)
+      }
+    })
+
+
+  })
+}
+
+app.post('/create_server',  async function(req,res){
+  const {name , type , image  , key , role} = req.body.server_details
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+  // create a server in the servers collection
+  const server_template = await template(user_id , req.body.server_details)
+
+  // adds server details in user document
+  const add_server = await add_server_to_user(user_id.id , server_template , role)
+  
+
+  if(add_server==true){
+    res.json({status:200 , message:'Server Created'})
+  }
+  else{
+    res.json({status:500 , message:'Somethig Went Wrong'})
+  }
 })
 
+
+
+app.post('/server_info' , async function(req,res){
+  const server_id = req.body.server_id
+  const server_info = await servers.find({_id:new mongoose.Types.ObjectId(server_id) })
+  res.json(server_info)
+})
+
+app.post('/add_new_channel' , async function(req,res){
+  const {category_id , channel_name , channel_type , server_id} = req.body
+  var new_channel = {$push:{'categories.$.channels':{channel_name:channel_name , channel_type:channel_type}
+  }}
+
+  servers.updateOne({_id:new mongoose.Types.ObjectId(server_id) , 'categories._id':new mongoose.Types.ObjectId(category_id)} , new_channel,  function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        res.json({status:200})
+      }
+    }
+  })
+})
+
+
+app.post('/add_new_category', async function(req,res){
+  const {category_name , server_id} = req.body
+  var new_category = {$push:{'categories':{category_name:category_name , channels:[]}
+  }}
+
+  servers.updateOne({_id:new mongoose.Types.ObjectId(server_id)} , new_category , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        res.json({status:200})
+      }
+    }
+  })
+
+})

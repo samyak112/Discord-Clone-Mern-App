@@ -1,24 +1,26 @@
 import React from 'react'
 import rightcss from '../right_nav/right_nav.module.css'
+import {useParams} from 'react-router-dom'
+import Rightnav_chat from '../chat_components/rightnav_chat/Rightnav_chat'
+import Rightnav_dashboard from '../dashboard_components/rightnav_dashboard/Rightnav_dashboard'
 
 function Right_nav() {
+  const {server_id} = useParams()
   return (
     <div id={rightcss.main_wrap}>
-        <div id={rightcss.main}>
+      <div id={rightcss.main}>
+    <>
 
-            <div className={rightcss.right_nav_comps} id={rightcss.item_1}>
-                Active Now
-            </div>
+    {
+      server_id=='@me'|| server_id==undefined?
+      <Rightnav_dashboard></Rightnav_dashboard>
+      :
+      <Rightnav_chat></Rightnav_chat>
+    }
 
-            <div className={rightcss.right_nav_comps} id={rightcss.item_2_wrap}>
-                <div className={rightcss.item_2_comps} id={rightcss.item_2_1}>It's quiet for now...</div>
-                <div className={rightcss.item_2_comps} id={rightcss.item_2_2}>
-                When a friend starts an activity  like playing a game or hanging out on voice  we'll show it here!
-                </div>
-            </div>
-        
-    </div>
-    </div>
+    </>
+   </div>
+   </div>
   )
 }
 

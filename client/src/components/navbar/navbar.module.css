@@ -19,6 +19,8 @@
     height: 48px;
     margin-bottom: 1rem;
     position: relative;
+    text-decoration: none;
+    color: white;
 }
 
 /* this is to get a line after the last dm box */
@@ -31,6 +33,17 @@
     bottom: -20%;
     border-bottom: 3px solid #373A3F;
 }
+
+.servers_wrap{
+    height: auto;
+    overflow-y: scroll;
+}
+
+::-webkit-scrollbar {
+    display: none;
+  }
+
+
 
 .servers:last-child::after{
     content: '';
@@ -68,6 +81,7 @@
     align-items: center;
     cursor: pointer;
     transition: border-radius .2s;
+    font-size: 1.5rem;
 }
 
 .middle:hover{
@@ -76,10 +90,12 @@
 
 .server_middle{
     background-color: #36393F;
+
 }
 
 .server_middle:hover{
     background-color: #5865F2;
+    color: white;
 }
 
 .middle img{
@@ -106,6 +122,149 @@
     /* i had to specify border radius to be 0 here because otherwise it inherits border radius from its class i.e .middle img */
 }
 
+#new_server_wrap{
+    position: relative;
+    max-width: 450px;
+}
+
+.server_close_button{
+    position: absolute;
+    right: 0px;
+    margin-top: .5rem;
+    margin-right: 1rem;
+    cursor: pointer;
+}
+
+#new_server{
+    max-height: 550px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: scaleX(1) 1s ease-in;
+}
+
+#server_heading{
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+}
+
+#server_sub_heading{
+    width: 85%;
+    text-align: center;
+    color: #909396;
+    margin-bottom: 1.5rem;
+}
+
+#server_template_wrap{
+    width: 95%;
+    overflow-y: scroll;
+}
+
+#server_template_wrap::-webkit-scrollbar {
+    width: 0px;
+  }
 
 
+.server_template{
+    width: 100%;
+    display: flex;
+    border-radius: 10px;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    border: 1px solid #d1d4d8;
+    padding: .4rem;
+    margin-bottom: 1rem;
+}
 
+
+.server_template:hover{
+    background-color: #e5eaec;
+    cursor: pointer;
+}
+
+#server_template_item_1{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.back_button_wrap{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    margin: 2rem 0rem 1rem 2rem;
+}
+
+.back_button{
+    width: fit-content;
+    cursor: pointer;
+    border: none;
+    background-color: white;
+}
+
+.question{
+    display: flex;
+    gap: .2rem;
+    font-size: .8rem;
+}
+
+.question_link{
+    color: blue;
+    cursor: pointer;
+}
+
+.input_field{
+    cursor: pointer;
+    margin-bottom: 2rem;
+}
+
+.input_field img{
+    width: 5rem;
+}
+
+.server_details{
+    width: 90%;
+    margin-bottom: 1rem;
+}
+
+#server_name_heading{
+    font-size: .8rem;
+    font-weight: 650;
+    color: #4F5660;
+    margin-bottom: .5rem;
+}
+
+
+#server_name input{
+    height: 2.5rem;
+    background-color: #E3E5E8;
+    border: none;
+    text-indent: 1rem;
+}
+
+#server_name input:focus{
+    outline: none;
+}
+
+#server_name_input{
+    width: 100%;
+}
+
+.buttons_wrap{
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    margin-bottom: 1rem;
+}
+
+.create_button{
+    background-color: #5865F2;
+}
+
+.icons{
+    cursor: pointer;
+    padding: 3px;
+    color:#B9BBBE
+}

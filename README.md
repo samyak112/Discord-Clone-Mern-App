@@ -38,3 +38,4 @@ Upcoming Features:-
 1. Invite People
 2. Chat on Servers
 3. Video chat and audio chat
+4. Redis for caching

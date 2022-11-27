@@ -39,3 +39,4 @@ Upcoming Features:-
 2. Chat on Servers
 3. Video chat and audio chat
 4. Redis for caching
+5. setting an auth to check if a user is allowed in a particular server or not if he/she gets the url of that server somehow and try to enter in it directly

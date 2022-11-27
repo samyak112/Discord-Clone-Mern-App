@@ -148,7 +148,6 @@ function generateOTP() {
 
 function isusername_available(username){
   return new Promise ((resolve,reject)=>{
-    console.log('inside username')
     username_details.find({name:username},function(err,data){
       var count_value = 0;
       if(err){
@@ -156,7 +155,6 @@ function isusername_available(username){
        }
        else{
          if(data.length==0){
-          console.log('inside conidtion onww')
           //  var add_user_name = { $push: {user_name:[{name:username , count:1}]}}
            var count_value = 1
            var add_new_username = new username_details({name:username , count:1});
@@ -166,15 +164,8 @@ function isusername_available(username){
             if (err_2) return console.error(err_2);
             else {console.log(data_2) }
           });
-          //  username_details.updateOne({_id:process.env.username_id},add_user_name,function(err,result){
-          //    if (err) console.log(err)
-          //    else{
-          //     console.log(result)
-          //    }
-          //  })
          }
          else{
-          console.log('else')
            var count_value = data[0].count+1
            var add_user_name = { $set: {name:username , count:count_value}}
            username_details.updateOne({name:username},add_user_name,function(err,result){
@@ -184,9 +175,7 @@ function isusername_available(username){
            })
          }
          const final_tag = generatetag(count_value)
-        
-       // res.redirect('/verify')
-       // res.status(201).json({message:'data saved',status:201});
+      
          const value = {message : 'data saved' , status:201 , final_tag:final_tag}
          resolve(value);
    

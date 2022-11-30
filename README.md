@@ -1,7 +1,13 @@
 # Discord-Clone-Mern-App
 Description -
-
 This appication is an attempt to clone the functionalites of the Discord web version.
+
+Images of Current state:-
+
+![Screenshot (75)](https://user-images.githubusercontent.com/73217093/204859563-a0385786-11cb-469d-b391-73abadbeb282.png)
+![Screenshot (76)](https://user-images.githubusercontent.com/73217093/204859745-87c37941-c8c8-43f8-86a0-2314f9be6478.png)
+
+![Screenshot (77)](https://user-images.githubusercontent.com/73217093/204859588-d15d2b17-a8b9-484d-82b1-bb6e3bc3d836.png)
 
 # Technologies Used
 
@@ -41,9 +47,3 @@ Upcoming Features:-
 3. Video chat and audio chat
 4. Redis for caching
 5. setting an auth to check if a user is allowed in a particular server or not if he/she gets the url of that server somehow and try to enter in it directly
-
-Images of Current state:-
-![Screenshot (75)](https://user-images.githubusercontent.com/73217093/204859563-a0385786-11cb-469d-b391-73abadbeb282.png)
-![Screenshot (76)](https://user-images.githubusercontent.com/73217093/204859745-87c37941-c8c8-43f8-86a0-2314f9be6478.png)
-
-![Screenshot (77)](https://user-images.githubusercontent.com/73217093/204859588-d15d2b17-a8b9-484d-82b1-bb6e3bc3d836.png)

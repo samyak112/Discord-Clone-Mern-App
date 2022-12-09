@@ -3,12 +3,20 @@ import { useSelector } from 'react-redux'
 import main_chatcss from '../main_chat/main_chat.module.css'
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import TagIcon from '@mui/icons-material/Tag';
+import socket from '../../Socket/Socket';
+
 
 function Main_chat() {
   const channel_id = useSelector(state => state.current_page.page_id)
   const channel_name = useSelector(state => state.current_page.page_name)
+
+
+
+  
+
   return (
-    <div className={main_chatcss.main}>
+    <>
+    <div className={main_chatcss.mainchat}>
       <div id={main_chatcss.top}>
         <div id={main_chatcss.welcome_part}>
           <div id={main_chatcss.tag}> <TagIcon fontSize='large'></TagIcon></div>
@@ -24,7 +32,8 @@ function Main_chat() {
           <input type="text" placeholder={`Message #${channel_name}`} />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

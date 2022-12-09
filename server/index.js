@@ -6,26 +6,48 @@ const port = process.env.PORT || 3080;
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken')
 const cors = require('cors')
+const { Server } = require("socket.io");
 
 app.use(cors())
 app.use(express.json({limit:'10kb'}))
 app.use(express.urlencoded({extended:true,limit:'10kb'}))
-const server = http.createServer((req, res) => {
-  console.log('hellow world')
-})
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`listening on port ${port}`)
 })
 
 
+const io = require('socket.io')(server,{
+  pingTimeout:20000,
+  cors:{
+    origin:"http://localhost:3000"
+  }
+})
+
+io.on("connection", (socket) => {
+  socket.on('get_userid' , (user_id)=>{
+    socket.join(user_id)
+  })
+
+  socket.on('send_req' , (receiver_id ,sender_id, sender_profile_pic ,sender_name)=>{
+    socket.to(receiver_id).emit( 'recieve_req',{sender_name:sender_name , sender_profile_pic:sender_profile_pic , sender_id})
+  })
+
+  socket.on('req_accepted' , (sender_id, friend_id , friend_name , friend_profile_pic)=>{
+    socket.to(friend_id).emit( 'req_accepted_notif',{sender_id , friend_name:friend_name , friend_profile_pic:friend_profile_pic})
+  })
+
+  // socket.on('req_accepted' , (sender_id)=>{
+  //   socket.to(receiver_id).emit( 'recieve_req', 'you received a req ')
+  // })
+  
+});
+
+
+
+
 // mogoose config
 const mongoose = require('mongoose');
-const { stringify } = require('querystring');
-const { receiveMessageOnPort } = require('worker_threads');
-const { count } = require('console');
-const { response } = require('express');
-const { timingSafeEqual } = require('crypto');
 mongoose.connect(process.env.MONGO_URI);
 
 // user modal
@@ -459,7 +481,7 @@ function add_friend(user_data , friend_data){
   const {id , username , tag , profile_pic} = user_data
 
   return new Promise((resolve,reject)=>{
-    console.log('adding friend....')
+    // console.log('adding friend....')
     let user_friends_list = { $push: {friends:[{
       id:friend_id,
       username: friend_username,
@@ -590,7 +612,7 @@ app.post('/add_friend',async function(req,res){
               user.updateOne({ _id: friend_id }, sending_req, function (err, result) {
                 if (err) throw err;
                 else {
-                  console.log('request sent')
+                  // console.log('request sent')
                 }
               });
     
@@ -599,7 +621,7 @@ app.post('/add_friend',async function(req,res){
                 if (err) throw err;
               });
             }
-            res.status(203).json({message:'Request sent successfully',status:203});
+            res.status(203).json({message:'Request sent successfully',status:203 , receiver_id:friend_id});
           }
         }
       }

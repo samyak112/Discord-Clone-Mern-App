@@ -16,11 +16,15 @@ import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import { update_options } from '../../../Redux/options_slice';
+import socket from '../../Socket/Socket';
+// import socketIO from 'socket.io-client';
 
 
-function Main_dashboard({user_relations}) {
-  const dispatch = useDispatch()
-  const option_check = useSelector(state => state.selected_option.value)
+function Main_dashboard({user_relations , user_creds}) {
+
+    const{username , tag, profile_pic,id} = user_creds
+    const dispatch = useDispatch()
+    const option_check = useSelector(state => state.selected_option.value)
     const option_name_check = useSelector(state => state.selected_option.option_name)
     const option_status = useSelector(state => state.selected_option.status)
     const option_text = useSelector(state => state.selected_option.text)
@@ -35,6 +39,8 @@ function Main_dashboard({user_relations}) {
     const{incoming_reqs , outgoing_reqs , friends} = user_relations
     let pending_reqs = [...incoming_reqs , ...outgoing_reqs]
     const url = process.env.REACT_APP_URL
+    
+   
 
     useEffect(()=>{
         if(option_check==2){
@@ -62,7 +68,9 @@ function Main_dashboard({user_relations}) {
 
               if(data.status == 200 || data.status == 404){
                 dispatch(update_options())
-                console.log('this is running')
+                if(data.status==200){
+                    socket.emit('req_accepted' ,id,  friend_data.id , username ,profile_pic)
+                }
                 // this is to update props and send the value back to parent element to update some states
               }
        };
@@ -103,12 +111,23 @@ function Main_dashboard({user_relations}) {
 
               if(data.status == 201 || data.status == 203){
                 dispatch(update_options())
+                if(data.status==203){
+                    socket.emit('send_req' , data.receiver_id , id , profile_pic , username)
+                  }
+    
                 // this is to update props and send the value back to parent element to update some states
               }
+
+              
               else if(data.status == 400){
                 setalert({style:'flex' , message:data.message})
               }
        };
+
+    // function testing(){
+    //     console.log('cliekd')
+    //     socket.emit('send_req' , '638376eecd35da269c668965')
+    // }
 
     useEffect(()=>{
         if(input.length>=1){
@@ -186,7 +205,7 @@ function Main_dashboard({user_relations}) {
         
         </>
         :
-        <div className={main_dashboardcss.main}>
+        <>
         {/* search bar */}
         <div id={main_dashboardcss.search_wrap}>
             <div id={main_dashboardcss.search}>
@@ -253,7 +272,7 @@ function Main_dashboard({user_relations}) {
             )
             })
         }
-    </div>
+    </>
     }
     </>
   )

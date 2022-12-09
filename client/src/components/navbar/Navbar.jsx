@@ -48,12 +48,6 @@ function Navbar({new_req_recieved ,user_cred}) {
 
   const url = process.env.REACT_APP_URL
 
-const tooltips = (value,props) => (
-  <Tooltip id="button-tooltip" {...props}>
-    {value}
-  </Tooltip>
-);
-  
   const create_server = async()=>{
     const res = await fetch(`${url}/create_server`,{
       method:'POST',

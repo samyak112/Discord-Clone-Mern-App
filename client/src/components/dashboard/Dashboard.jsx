@@ -16,8 +16,7 @@ function Dashboard() {
 
   let token1 = localStorage.getItem('token')
   let user_creds = jwt(token1);
-
-  const{username , tag, profile_pic} = user_creds
+  const{username , tag, profile_pic,id} = user_creds
   const [user_data, setuser_data] = useState({incoming_reqs:'', outgoing_reqs:'', friends:'' , servers:''})
   const [status, setstatus] = useState({pending_status:false , online_status:false , all_friends_status:false , blocked_staus:false})
   const [new_req, setnew_req] = useState(1)
@@ -88,7 +87,9 @@ function Dashboard() {
         user_relations={{
           incoming_reqs:user_data.incoming_reqs,
           outgoing_reqs:user_data.outgoing_reqs, 
-          friends:user_data.friends}}/>
+          friends:user_data.friends}}
+          user_creds={user_creds}
+          />
         </div>
         <div className={dashboardcss.components}  id={dashboardcss.component_5}><Right_nav/></div>
       

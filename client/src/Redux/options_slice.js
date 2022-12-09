@@ -23,7 +23,7 @@ export const options = createSlice({
         state.text = action.payload
       },
       update_options: (state)=>{
-        state.updated_options = update_options+1
+        state.updated_options = state.updated_options+1
       }
     },
   })

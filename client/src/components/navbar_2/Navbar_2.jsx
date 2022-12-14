@@ -14,7 +14,12 @@ import { useParams } from 'react-router-dom';
 function Navbar_2({user_cred}) {
   const {server_id} = useParams();
 
-  const{username , tag, profile_pic} = user_cred
+  // const{username , tag, profile_pic} = user_cred
+
+  // user details from redux
+  const username = useSelector(state => state.user_info.username)
+  const tag = useSelector(state => state.user_info.tag)
+  const profile_pic = useSelector(state => state.user_info.profile_pic)
 
   function buttons(message,Icon){
     return(
@@ -40,7 +45,7 @@ const tooltips = (value,props) => (
       <div>
         {
           server_id=='@me'|| server_id==undefined?
-          <Navbar2_dashboard profile_pic={profile_pic}></Navbar2_dashboard>
+          <Navbar2_dashboard></Navbar2_dashboard>
           :
           <Navbar2_chat></Navbar2_chat>
 
@@ -49,7 +54,7 @@ const tooltips = (value,props) => (
       {/* this div above is here just to seprate above part with the lower part using a grid */}
       <div id={nav2css.footer}>
         <div id={nav2css.profile} className={nav2css.footer_comps}>
-          <img src={discord_logo} alt="" />
+          <img src={profile_pic} alt="" />
         </div>
         <div id={nav2css.profile_name_wrap} className={nav2css.footer_comps}>
           <div id={nav2css.profile_name} className={nav2css.profile_name_comps}>{username}</div>

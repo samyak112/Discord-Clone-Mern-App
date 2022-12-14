@@ -7,23 +7,38 @@ import { useDispatch, useSelector } from 'react-redux';
 import { change_page_id , server_members , change_page_name} from '../../../Redux/current_page';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Modal from 'react-bootstrap/Modal';
+import Typography, { TypographyProps } from '@mui/material/Typography';
+import Skeleton from '@mui/material/Skeleton';
 
 
 function Navbar2_chat() {
   const url = process.env.REACT_APP_URL
 
-  const [show, setShow] = useState(false);
+  // user details from redux
+  const username = useSelector(state => state.user_info.username)
+  const tag = useSelector(state => state.user_info.tag)
+  const profile_pic = useSelector(state => state.user_info.profile_pic)
+  const id = useSelector(state => state.user_info.id)
 
+  const front_end_url = process.env.REACT_APP_front_end_url
+
+  // add channel modal states
+  const [show, setShow] = useState(false);
   const handleClose = () => {
     setShow(false)
     setcategory_creation_progress({text:'Create Category' , disabled:false})
   };
   const handleShow = () => setShow(true);
+
+  // invite people modal
+  const [inviteshow, setinviteshow] = useState(false);
+  const handle_inviteClose = () => setinviteshow(false);
+  const handle_inviteShow = () => setinviteshow(true);
+
 
   const {server_id} = useParams()
   const [show_options, setshow_options] = useState('none')
@@ -34,10 +49,28 @@ function Navbar2_chat() {
   const option_state = useSelector(state => state.selected_option.updated_options)
   const [new_category_name, setnew_category_name] = useState('')
   const [category_creation_progress, setcategory_creation_progress] = useState({text:'Create Category' , disabled:false})
+  const [invite_link, setinvite_link] = useState('')
 
   const [new_req, setnew_req] = useState(1)
   const new_req_recieved = (new_req_value) =>{
     setnew_req(new_req+new_req_value)
+  }
+  
+  const create_invite_link = async()=>{
+    const res = await fetch(`${url}/create_invite_link`,{
+      method:'POST',
+      headers:{
+          'Content-Type' : 'application/json',
+          'x-auth-token' : localStorage.getItem('token'),
+      },
+        body:JSON.stringify({
+          inviter_name:username , inviter_id:id , server_name:server_details.server_name , server_id:server_id , server_pic:server_details.server_pic
+      }),
+  })
+  const data = await res.json();
+  if(data.status==200){
+    setinvite_link(`${front_end_url}/invite/${data.invite_code}`)
+  }
   }
 
 
@@ -67,9 +100,9 @@ function Navbar2_chat() {
     setserver_details(data[0])
     dispatch(change_page_name(data[0].categories[0].channels[0].channel_name))
     dispatch(server_members(data[0].users))
-};
+  };
 
-const create_category = async() => {
+  const create_category = async() => {
     
   const res = await fetch(`${url}/add_new_category`,{
       method:'POST',
@@ -87,16 +120,19 @@ const create_category = async() => {
     server_info()
     handleClose()
   }
-};
+  };
 
   useEffect(()=>{
     server_info()
   },[server_id , new_req])  
 
   return (
-    <div>
+    <div className={navbar2_chatcss.main}>
+      
       <div className={navbar2_chatcss.options_wrap} style={{display:show_options}}>
-            <div className={navbar2_chatcss.options}>
+            <div className={navbar2_chatcss.options} onClick={()=>{ 
+              if(invite_link.length==0){create_invite_link();}  setinviteshow(true)
+              }}>
               <div className={navbar2_chatcss.options_comps}>Invite People</div>
               <div className={navbar2_chatcss.options_comps}><PersonAddIcon fontSize='small'></PersonAddIcon></div>
             </div>
@@ -107,7 +143,7 @@ const create_category = async() => {
             
             {
               server_role=='author'?
-              <div className={navbar2_chatcss.options} style={{color:'#e7625f'}}>
+              <div className={navbar2_chatcss.options}  style={{color:'#e7625f'}}>
                 <div className={navbar2_chatcss.options_comps}>Delete Server</div>
                 <div className={navbar2_chatcss.options_comps}><DeleteForeverIcon fontSize='small'></DeleteForeverIcon></div>
               </div>:
@@ -117,7 +153,7 @@ const create_category = async() => {
               </div>
             }
           </div>
-      <div className={navbar2_chatcss.server_name} onClick={change_options_visibility}>
+      <div className={`${navbar2_chatcss.server_name} ${navbar2_chatcss.nav_2_parts}`} onClick={change_options_visibility}>
           {server_details.server_name}
           {
             show_options=='none'?
@@ -130,16 +166,23 @@ const create_category = async() => {
         server_details.length==0?
         <></>
         :
-        server_details.categories.map((elem,key)=>{
-          return(
-            <>
-            <Server_details new_req_recieved = {new_req_recieved} elem={elem}></Server_details>
-            </>
-          )
-        })
+        <div className={`${navbar2_chatcss.category_info} ${navbar2_chatcss.nav_2_parts}`}>
+          {
+            server_details.categories.map((elem,key)=>{
+              return(
+                <>
+                <Server_details new_req_recieved = {new_req_recieved} elem={elem}></Server_details>
+                </>
+              )
+            })
+          }
+            
+        </div>
+        
         
       }
 
+      {/* Create new channel modal */}
       <Modal show={show} centered onHide={handleClose} id={navbar2_chatcss.modal_main_wrap}>
         <div className={navbar2_chatcss.modal_main}>
 
@@ -167,7 +210,45 @@ const create_category = async() => {
           </div>
         </div>
       </Modal>
-      
+
+      {/* invite people modal */}
+      <Modal
+          show={inviteshow}
+          onHide={handle_inviteClose}
+          backdrop="static"
+          keyboard={false}
+          centered
+          id={navbar2_chatcss.invite_modal}
+        >
+          <div className={`${navbar2_chatcss.invite_modal_main} ${navbar2_chatcss.modal_main} `}>
+            <CloseIcon id={navbar2_chatcss.close_button} onClick={handle_inviteClose}></CloseIcon>
+            <div className={navbar2_chatcss.invite_modal_comps} id={navbar2_chatcss.invite_top_part}>
+              Invite friends to {server_details.server_name}
+            </div>
+            <div className={navbar2_chatcss.invite_modal_comps} id={navbar2_chatcss.invite_bottom_part}>
+              SEND A SERVER INVITE LINK TO A FRIEND
+              <div id={navbar2_chatcss.invite_link_wrap}>
+                <div id={navbar2_chatcss.invite_link_value}>
+                  {
+                    invite_link.length==0?
+                    <Typography component="div" key={'caption'} variant={'caption'}>
+                      <Skeleton />
+                    </Typography>
+                    
+                  :
+                  invite_link
+
+                  }
+                  
+                </div>
+                <div id={navbar2_chatcss.copy_button_wrap}>
+                  <button id={navbar2_chatcss.copy_button}>Copy</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </Modal>
     </div>
   )
 }

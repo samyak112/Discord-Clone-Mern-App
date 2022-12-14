@@ -7,25 +7,21 @@ import {
 	Route,
 	Routes,
   } from "react-router-dom";
+import Invite from './components/Invite/Invite'
 
 function App() {
   return (
     <div>
         <Router>
           <Routes>
-            <Route exact path="/" 
-                element={
-                <Auth>
-                  <Login/>
-                </Auth>}>
+
+            <Route element={<Auth/>}>
+                  <Route path="/" element={<Login/>} />
+                  <Route exact path="/channels/:server_id" element={<Dashboard/>}></Route>
+                  <Route exact path="/invite/:invite_link" element={<Invite/>}></Route>
             </Route>
             <Route exact path="/register" element={<Register/>}></Route>
-            <Route exact path="/channels/:server_id" 
-                element={
-                <Auth>
-                  <Dashboard/>
-                </Auth>}>
-            </Route>
+            
           </Routes>
         </Router>
           

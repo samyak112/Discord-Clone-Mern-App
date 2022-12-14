@@ -7,6 +7,9 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken')
 const cors = require('cors')
 const { Server } = require("socket.io");
+const short_id = require('shortid');
+
+
 
 app.use(cors())
 app.use(express.json({limit:'10kb'}))
@@ -48,6 +51,7 @@ io.on("connection", (socket) => {
 
 // mogoose config
 const mongoose = require('mongoose');
+const shortid = require('shortid');
 mongoose.connect(process.env.MONGO_URI);
 
 // user modal
@@ -94,6 +98,12 @@ var user_details = new mongoose.Schema({
     verification : [{
       timestamp : Number,
       code:String
+    }],
+
+    invites:[{
+      server_id:String,
+      invite_code:String,
+      timestamp:String,
     }]
     
   },{ typeKey: '$type' })
@@ -120,13 +130,25 @@ var user_details = new mongoose.Schema({
         channel_type:String
       }]
     }],
+    // will be false when server is deleted
     active:Boolean
+  })
+
+  var invites = new mongoose.Schema({
+    invite_code:String,
+    inviter_name:String, 
+    inviter_id:String,
+    server_name:String,
+    server_id:String,
+    server_pic:String,
+    timestamp:String,
   })
   
   // user
   var user = mongoose.model('discord_user', user_details);
   var username_details = mongoose.model('discord_username', user_name_details);
   var servers = mongoose.model('discord_server', servers);
+  var invites = mongoose.model('discord_invites', invites);
 
 
 app.get('/', (req, res) => {
@@ -887,4 +909,178 @@ app.post('/add_new_category', async function(req,res){
     }
   })
 
+})
+
+function check_invite_link(inviter_id , server_id){
+  return new Promise((resolve,reject)=>{
+    user.aggregate([
+    {"$match" : {
+      "_id": new mongoose.Types.ObjectId(inviter_id)}} , 
+
+    {"$project":{
+
+      "invites":{
+        
+        "$filter":{
+          "input":"$invites",
+          "as":"invite",
+          "cond":{"$eq":["$$invite.server_id",server_id]}
+    }
+    }}}],
+    
+    function(err,data){
+      if(err) console.log(err)
+      else{
+        resolve(data)
+        
+      }
+    })
+  })
+}
+
+app.post('/create_invite_link' , async function(req,res){
+  const {inviter_name , inviter_id,  server_name , server_id , server_pic} = req.body
+
+  let response = await check_invite_link(inviter_id , server_id)
+
+  if(response[0].invites.length==0){
+    const timestamp = Date.now()
+    const invite_code = short_id()
+
+    // for appending in invites collection
+    var add_new_invite_link = new invites({
+      invite_code:invite_code,
+      inviter_name:inviter_name , 
+      inviter_id:inviter_id , 
+      server_name:server_name , 
+      server_id:server_id , 
+      server_pic:server_pic,
+      timestamp:timestamp
+      });
+  
+    add_new_invite_link.save(function (err_2, data_2) {
+        if (err_2) return console.error(err_2);
+        else {console.log('added to invites collection') }
+      });
+  
+    // for appending in user details
+    let user_invites_list = { $push: {invites:[{
+      server_id:server_id,
+      invite_code:invite_code,
+      timestamp: timestamp,
+    }]} };
+  
+    user.updateOne({"_id": new mongoose.Types.ObjectId(inviter_id)} , user_invites_list , function(err,data){
+      if(err) console.log(err)
+      else{
+        if(data.modifiedCount>0){
+          console.log('successfully updated invites')
+        }
+      }
+    })
+    res.json({status:200 , invite_code:invite_code})
+  }
+  else{
+    res.json({status:200 , invite_code:response[0].invites[0].invite_code})
+  }
+})
+
+app.post('/invite_link_info' , function(req,res){
+  const invite_link  = req.body.invite_link
+  invites.find({invite_code:invite_link} ,function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.length==1){
+        const {inviter_name , server_name , server_pic ,server_id , inviter_id} =  data[0]
+        res.json({status:200 , inviter_name , server_name , server_pic , server_id , inviter_id })
+      }
+      else{
+        res.json({status:404})
+      }
+    }
+  })
+})
+
+function add_user_to_server(user_details , server_id){
+  const {username , tag , id , profile_pic} = user_details
+
+ return new Promise((resolve,reject)=>{
+
+   // for appending in user details
+   let new_user_to_server = { $push: {users:[{
+    user_name:username,
+    user_profile_pic:profile_pic,
+    user_tag: tag,
+    user_role:'member'
+  }]} };
+
+  servers.updateOne({_id:server_id} ,new_user_to_server , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        resolve(true)
+      }
+    }
+  })
+  
+ })
+}
+
+function check_server_in_user(id,server_id){
+  return new Promise((resolve,reject)=>{
+    user.aggregate([
+    {"$match" : {
+      "_id": new mongoose.Types.ObjectId(id)}} , 
+
+    {"$project":{
+
+      "servers":{
+        
+        "$filter":{
+          "input":"$servers",
+          "as":"server",
+          "cond":{"$eq":["$$server.server_id",server_id]}
+    }
+    }}}],
+    
+    function(err,data){
+      if(err) console.log(err)
+      else{
+        resolve(data)
+        
+      }
+    })
+  })
+}
+
+app.post('/accept_invite' , async function(req,res){
+  const {user_details , server_details} = req.body
+  const {username , tag , id , profile_pic} = user_details
+
+  const server_id = server_details.invite_details.server_id
+
+  const check_user = await check_server_in_user(id,server_id);
+
+  if(check_user[0].servers.length==0){
+      // adds user details to the server docuemnt
+      const add_user = await add_user_to_server(user_details , server_id)
+
+      // adds server details in user document
+      if(add_user==true){
+        const add_server = await add_server_to_user(id , server_details.invite_details , 'member')
+        res.json({status:200})
+      }
+      else{
+        console.log('something went wrong in add_user')
+      }
+
+      console.log('user added to server')
+  }
+  else{
+    console.log('user is already in server')
+    res.json({status:403})
+  }
+
+  
+  
 })

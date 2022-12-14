@@ -9,7 +9,10 @@ import socket from '../../Socket/Socket';
 function Main_chat() {
   const channel_id = useSelector(state => state.current_page.page_id)
   const channel_name = useSelector(state => state.current_page.page_name)
-
+  // user details from redux
+  // const username = useSelector(state => state.user_info.username)
+  // const profile_pic = useSelector(state => state.user_info.profile_pic)
+  // const id = useSelector(state => state.user_info.id)
 
 
   

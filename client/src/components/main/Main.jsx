@@ -4,13 +4,16 @@ import Main_dashboard from '../dashboard_components/main_dashboard/Main_dashboar
 import Main_chat from '../chat_components/main_chat/Main_chat';
 import socket from '../Socket/Socket';
 import { update_options } from '../../Redux/options_slice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import maincss from '../main/main.module.css'
 import CloseIcon from '@mui/icons-material/Close';
 import discord_logo from '../../images/discord_logo_3.png'
 
-function Main({user_creds,user_relations}) {
+
+function Main({user_relations}) {
   const dispatch = useDispatch()
+  const id = useSelector(state => state.user_info.id)
+
   const [req_popup, setreq_popup] = useState({state:'none' , value:false})
   const [req_popup_data, setreq_popup_data] = useState({profile_pic:'' , name:'' , notif_message:'' , id:null})
 
@@ -18,8 +21,10 @@ function Main({user_creds,user_relations}) {
   const {server_id} = useParams()
 
   useEffect(()=>{
-    socket.emit('get_userid' , user_creds.id)
-  },[])
+    if(id!=0){
+      socket.emit('get_userid' , id)
+    }
+  },[id])
 
   useEffect(()=>{
     if(req_popup_data.id!=null){
@@ -31,6 +36,7 @@ function Main({user_creds,user_relations}) {
   },[req_popup_data.id])
 
   socket.on('recieve_req' ,message=>{
+    console.log('req recieved')
       const {sender_name , sender_profile_pic , sender_id} =  message
       setreq_popup_data({name:sender_name , profile_pic:sender_profile_pic , id:sender_id , notif_message:'Sent you a friend Request'})
       setreq_popup({state:'flex' , value:true})
@@ -48,7 +54,7 @@ function Main({user_creds,user_relations}) {
 
     <>
         {
-            server_id=='@me' ||server_id==undefined?<Main_dashboard user_creds={user_creds} user_relations={user_relations}></Main_dashboard>:<Main_chat user_creds={user_creds}></Main_chat>
+            server_id=='@me' ||server_id==undefined?<Main_dashboard user_relations={user_relations}></Main_dashboard>:<Main_chat ></Main_chat>
 
         }
 

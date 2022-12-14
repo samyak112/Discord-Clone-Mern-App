@@ -5,8 +5,12 @@ import AddIcon from '@mui/icons-material/Add';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import offline_icon from '../../../images/offline_status.svg'
+import { useSelector } from 'react-redux';
 
-function Navbar_2_dashboard({profile_pic}) {
+function Navbar_2_dashboard() {
+
+  const profile_pic = useSelector(state => state.user_info.profile_pic)
+
     const renderTooltip = (props) => (
         <Tooltip id="button-tooltip" {...props}>
           Create DM

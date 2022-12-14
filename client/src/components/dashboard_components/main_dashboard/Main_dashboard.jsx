@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import SearchIcon from '@mui/icons-material/Search';
 import main_dashboardcss from '../main_dashboard/main_dashboard.module.css'
-// import profile_pic from '../../images/profile_pic.jpg'
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
@@ -17,17 +16,20 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import { update_options } from '../../../Redux/options_slice';
 import socket from '../../Socket/Socket';
-// import socketIO from 'socket.io-client';
 
 
-function Main_dashboard({user_relations , user_creds}) {
+function Main_dashboard({user_relations}) {
 
-    const{username , tag, profile_pic,id} = user_creds
     const dispatch = useDispatch()
     const option_check = useSelector(state => state.selected_option.value)
     const option_name_check = useSelector(state => state.selected_option.option_name)
     const option_status = useSelector(state => state.selected_option.status)
     const option_text = useSelector(state => state.selected_option.text)
+
+    // user details from redux
+    const username = useSelector(state => state.user_info.username)
+    const profile_pic = useSelector(state => state.user_info.profile_pic)
+    const id = useSelector(state => state.user_info.id)
 
     const [button_state, setbutton_state] = useState(true)
     const [option_data, setoption_data] = useState([{username:'' , tag:'' , profile_pic:'' , status:''}])

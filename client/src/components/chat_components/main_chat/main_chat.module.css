@@ -2,7 +2,7 @@
     background-color: #36393F;
     height: inherit;
     /* height: 100%; */
-    /* position: relative; */
+    position: relative;
     display: grid;
     grid-template-rows: 90% 10%;
 }

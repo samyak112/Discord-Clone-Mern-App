@@ -1,16 +1,17 @@
 import { useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate,Outlet} from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux'
 import { decrement, increment } from '../../Redux/counterSlice'
 import Login from '../Login/Login';
 import Dashboard from '../dashboard/Dashboard'
 import { useState } from 'react';
+import Loading from '../Loading_page/Loading'
 
 
 const Auth = (props) => {
     const Navigate = useNavigate();
     // reading data from redux store
-    const auth_check = useSelector(state => state.isauthorized.value)
+    const [auth_check, setauth_check] = useState(null)
     const dispatch = useDispatch();
 
     const url = process.env.REACT_APP_URL
@@ -26,10 +27,10 @@ const Auth = (props) => {
         const data = await res.json();
         
         if(data.status == 201){
-            {dispatch(increment())}
+            setauth_check(true)
         }
         else{
-            {dispatch(decrement())}
+            setauth_check(false)
         }
 
     }
@@ -37,25 +38,49 @@ const Auth = (props) => {
     // made a use effect here so that whenever this file is invoked through app.js then this function must runs otherwise it will have the default values in it
     
     useEffect(()=>{
-        private_routes()
-    })
-
-
-    if (auth_check == true) {
-        if(props.children.type.name == 'Login'){
-            Navigate('/channels/@me')
-            return <Dashboard/>
+        if(localStorage.getItem('token')==''){
+            setauth_check(false)
         }
         else{
-            return props.children
+            private_routes()
         }
-       
-    } 
+    })
 
-    else {
-        // Navigate('/')
-        return <Login/>
-        }
+    return(
+        <>
+            {
+            auth_check==true?
+                window.location.pathname=='/'?
+                Navigate('/channels/@me')
+                :
+                <Outlet/>
+            :
+            
+            auth_check==false
+            ?
+            <Login/>
+            :
+            <Loading/>
+            }
+        </>
+    )
+
+
+    // if (auth_check == true) {
+    //     if(props.children.type.name == 'Login'){
+    //         Navigate('/channels/@me')
+    //         return <Dashboard/>
+    //     }
+    //     else{
+    //         return props.children
+    //     }
+       
+    // } 
+
+    // else {
+    //     // Navigate('/')
+    //     return <Login/>
+    //     }
 }
 
 export default Auth

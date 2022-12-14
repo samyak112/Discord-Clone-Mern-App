@@ -7,9 +7,12 @@ import Main from '../main/Main';
 import Right_nav from '../right_nav/Right_nav';
 import jwt from 'jwt-decode'
 import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { change_username,change_tag,option_profile_pic,option_user_id } from '../../Redux/user_creds_slice';
 
-function Dashboard() {  
+
+function Dashboard() { 
+  const dispatch = useDispatch()
   const {server_id} = useParams();
   const option_state = useSelector(state => state.selected_option.updated_options)
   const url = process.env.REACT_APP_URL
@@ -40,6 +43,16 @@ function Dashboard() {
   useEffect(()=>{
     user_relations()
   },[new_req , option_state])
+
+
+  useEffect(()=>{
+    dispatch(change_username(username))
+    dispatch(change_tag(tag))
+    dispatch(option_profile_pic(profile_pic))
+    dispatch(option_user_id(id))
+  },[])
+
+
   // this use effect will run once and after that it will run whenever there is some change in requests like accept or denied or something
 
   
@@ -80,7 +93,7 @@ function Dashboard() {
     
     <div className={dashboardcss.main} style={{"gridTemplateColumns":grid_layout}}>
         <div className={dashboardcss.components} id={dashboardcss.component_1}><Navbar user_cred={{username:username , user_servers:user_data.servers}} new_req_recieved = {new_req_recieved} /></div>
-        <div className={dashboardcss.components} id={dashboardcss.component_2}><Navbar_2 user_cred={{username:username , tag:tag , profile_pic:profile_pic}} /></div>
+        <div className={dashboardcss.components} id={dashboardcss.component_2}><Navbar_2/></div>
         <div className={dashboardcss.components} id={dashboardcss.component_3}><Top_nav button_status={{pending:status.pending_status , all_friends : status.all_friends_status}}/>
         </div>
         <div className={dashboardcss.components} id={dashboardcss.component_4}><Main
@@ -88,7 +101,6 @@ function Dashboard() {
           incoming_reqs:user_data.incoming_reqs,
           outgoing_reqs:user_data.outgoing_reqs, 
           friends:user_data.friends}}
-          user_creds={user_creds}
           />
         </div>
         <div className={dashboardcss.components}  id={dashboardcss.component_5}><Right_nav/></div>

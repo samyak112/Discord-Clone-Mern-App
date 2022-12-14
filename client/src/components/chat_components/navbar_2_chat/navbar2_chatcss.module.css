@@ -1,3 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+.main{
+    display: grid;
+    grid-template-rows: 50px auto;
+    
+}
+
+
 .server_name{
     position: relative;
     border-bottom: 1px solid #232427;
@@ -38,6 +47,11 @@
 
 .options:hover{
     background-color: blueviolet;
+    color: white !important; 
+}
+
+.options:last-child:hover{
+    background-color: rgb(231, 98, 95);
 }
 
 #modal_main_wrap{
@@ -47,7 +61,8 @@
 
 .modal_main{
     background-color: #36393F;
-    padding: 1rem;    
+    padding: 1rem;  
+    color: white;  
 }
 
 .modal_comps{
@@ -80,6 +95,7 @@
     border-radius: 5px;
     padding: .5rem;
 }
+
 
 #channel_name input{
     background-color: #202225;
@@ -127,3 +143,70 @@
 #create_button:hover{
     background-color: rgb(71, 71, 243);
 }
+
+#invite_modal{
+    max-width: 25rem;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.invite_modal_main{
+    position: relative;
+}
+
+#close_button{
+    position: absolute;
+    right: 10px;
+    color: #777A7E;
+    cursor: pointer;
+}
+
+#close_button:hover{
+    color: white;
+}
+
+
+.invite_modal_comps{
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+#invite_bottom_part{
+    font-size: .6rem;
+}
+
+#invite_bottom_part{
+    color: #B4B6BA;
+    font-weight: 700;
+}
+
+#invite_link_wrap{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: .5rem;
+    padding: .5rem;
+    background-color: #202225;
+}
+
+
+#invite_link_value{
+    width: 80%;
+    font-weight: 500;
+    font-size: .8rem;
+    color: #B4B6BA;
+}
+
+#copy_button{
+    background-color: #4150f0;
+    color: white;
+    border: none;
+    padding: .2rem 1rem .2rem 1rem;
+    border-radius: 2px;
+    font-weight: 600;
+    font-size: .8rem;
+}
+
+#copy_button:hover{
+    background-color: #717cee;
+}
+

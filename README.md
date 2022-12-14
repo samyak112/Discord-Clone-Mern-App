@@ -1,6 +1,7 @@
 # Discord-Clone-Mern-App
 
 Note:- Features are listed at the bottom
+
 Description -
 This appication is an attempt to clone the functionalites of the Discord web version.
 

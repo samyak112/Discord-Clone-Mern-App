@@ -5,7 +5,7 @@ Note:- Features are listed at the bottom
 Description -
 This appication is an attempt to clone the functionalites of the Discord web version.
 
-Images of Current state:-
+# Previews:-
 
 ![Screenshot (75)](https://user-images.githubusercontent.com/73217093/204859563-a0385786-11cb-469d-b391-73abadbeb282.png)
 ![Screenshot (76)](https://user-images.githubusercontent.com/73217093/204859745-87c37941-c8c8-43f8-86a0-2314f9be6478.png)

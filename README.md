@@ -44,6 +44,7 @@ Database -
 - [x] Invite people to Server
     1. Kept in mind that if a user is already in the server it shouldn't add again
 - [x] Chat on Servers
+- [x] Server Roles - 'Creator' and 'Member'
 - [x] An auth to check if a user is allowed in a particular server or not if he/she gets the url of that server somehow and try to enter in it directly
 
 

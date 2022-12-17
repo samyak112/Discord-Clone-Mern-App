@@ -49,3 +49,4 @@ Database -
 
 # Upcoming Features:-
 - [ ] Video chat and audio chat
+- [ ] Change Profile pic and Server pic

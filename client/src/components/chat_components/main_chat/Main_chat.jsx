@@ -1,41 +1,26 @@
-import React from 'react'
-import { useSelector } from 'react-redux'
-import main_chatcss from '../main_chat/main_chat.module.css'
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import TagIcon from '@mui/icons-material/Tag';
-import socket from '../../Socket/Socket';
-
+import React, { useEffect, useState } from 'react'
+import Invalid_chat from '../invalid_main_chat/Invalid_chat'
+import Valid_chat from '../valid_main_chat/Valid_chat'
+import {useSelector} from 'react-redux';
+import Loading from '../../Loading_page/Loading';
 
 function Main_chat() {
-  const channel_id = useSelector(state => state.current_page.page_id)
-  const channel_name = useSelector(state => state.current_page.page_name)
-  // user details from redux
-  // const username = useSelector(state => state.user_info.username)
-  // const profile_pic = useSelector(state => state.user_info.profile_pic)
-  // const id = useSelector(state => state.user_info.id)
 
+   // redux value to check if user is in the particular server or not
+   const server_exists = useSelector(state => state.current_page.server_exists)
 
-  
 
   return (
     <>
-    <div className={main_chatcss.mainchat}>
-      <div id={main_chatcss.top}>
-        <div id={main_chatcss.welcome_part}>
-          <div id={main_chatcss.tag}> <TagIcon fontSize='large'></TagIcon></div>
-          <div className={main_chatcss.welcome_comps} id={main_chatcss.welcome_comp_1}>Welcome to #{channel_name}</div>
-          <div className={main_chatcss.welcome_comps} id={main_chatcss.welcome_comp_2}>This is the start of the #{channel_name} channel</div>
-        </div>
-        <div id={main_chatcss.chat_part}></div>
-      </div>
-
-      <div id={main_chatcss.bottom}>
-        <div id={main_chatcss.message_input}>
-          <AddCircleIcon htmlColor='#B9BBBE'></AddCircleIcon>
-          <input type="text" placeholder={`Message #${channel_name}`} />
-        </div>
-      </div>
-      </div>
+    {
+        server_exists==null?
+        <Loading></Loading>
+        :
+          server_exists==false?
+            <Invalid_chat></Invalid_chat>
+            :
+            <Valid_chat></Valid_chat>
+      }
     </>
   )
 }

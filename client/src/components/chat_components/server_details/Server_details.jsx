@@ -61,9 +61,10 @@ function Server_details({new_req_recieved,elem}) {
     }
     }
 
-    function change_channel(channel_type , channel_name){
+    function change_channel(channel_type , channel_name , channel_id){
       if(channel_type=='text'){
         dispatch(change_page_name(channel_name))
+        dispatch(change_page_id(channel_id))
       }
     }
 
@@ -87,7 +88,7 @@ function Server_details({new_req_recieved,elem}) {
                 return(
                   <div className={servercss.channels_wrap} style={{display:show_channels}}>
 
-                    <div className={servercss.channels} onClick={()=>{change_channel(channel_elem.channel_type , channel_elem.channel_name)}}>
+                    <div className={servercss.channels} onClick={()=>{change_channel(channel_elem.channel_type , channel_elem.channel_name , channel_elem._id)}}>
                     {
                       channel_elem.channel_type=='text'?
                       <TagIcon fontSize='small'></TagIcon>:

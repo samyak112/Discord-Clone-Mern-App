@@ -6,7 +6,8 @@ export const current_page = createSlice({
       page_id:'',
       page_name:'',
       members:[],
-      role:''
+      role:'',
+      server_exists:null
     },
     reducers: {
       change_page_id:(state,action)=>{
@@ -21,11 +22,14 @@ export const current_page = createSlice({
       server_role:(state,action)=>{
         state.role = action.payload
       },
+      server_existence:(state,action)=>{
+        state.server_exists = action.payload
+      }
     },
   })
 
   // Action creators are generated for each case reducer function
-export const {change_page_id,change_page_name,server_members,server_role} = current_page.actions
+export const {change_page_id,change_page_name,server_members,server_role,server_existence} = current_page.actions
 
 
 export default current_page.reducer

@@ -36,7 +36,6 @@ function Main({user_relations}) {
   },[req_popup_data.id])
 
   socket.on('recieve_req' ,message=>{
-    console.log('req recieved')
       const {sender_name , sender_profile_pic , sender_id} =  message
       setreq_popup_data({name:sender_name , profile_pic:sender_profile_pic , id:sender_id , notif_message:'Sent you a friend Request'})
       setreq_popup({state:'flex' , value:true})

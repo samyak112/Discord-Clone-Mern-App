@@ -9,8 +9,6 @@ const cors = require('cors')
 const { Server } = require("socket.io");
 const short_id = require('shortid');
 
-
-
 app.use(cors())
 app.use(express.json({limit:'10kb'}))
 app.use(express.urlencoded({extended:true,limit:'10kb'}))
@@ -40,14 +38,15 @@ io.on("connection", (socket) => {
     socket.to(friend_id).emit( 'req_accepted_notif',{sender_id , friend_name:friend_name , friend_profile_pic:friend_profile_pic})
   })
 
-  // socket.on('req_accepted' , (sender_id)=>{
-  //   socket.to(receiver_id).emit( 'recieve_req', 'you received a req ')
-  // })
+  socket.on('join_chat' , (channel_id)=>{
+    socket.join(channel_id)
+  })
+
+  socket.on('send_message' , (channel_id , message , timestamp , sender_name , sender_tag , sender_pic)=>{
+    socket.to(channel_id).emit('recieve_message',{message_data:{message , timestamp , sender_name , sender_tag , sender_pic}})
+  })
   
 });
-
-
-
 
 // mogoose config
 const mongoose = require('mongoose');
@@ -143,17 +142,37 @@ var user_details = new mongoose.Schema({
     server_pic:String,
     timestamp:String,
   })
-  
-  // user
+
+  // i could have directly used channel id as the key to search for the channel and didn't even used the server_id but ot would have increase the searching a lot  
+  // for example if there are 10 servers then each server must have atleast 2 channels and if thats the case it would make the search go for 20 documents but now just 10
+  var chats = new mongoose.Schema({
+    server_id:String,
+    channels:[{
+      channel_id:String,
+      channel_name:String,
+      chat_details:[{
+        content:String,
+        sender_id:String,
+        sender_name:String,
+        sender_pic:String,
+        sender_tag:String,
+        timestamp:String
+      }]
+    }]
+  })
+
   var user = mongoose.model('discord_user', user_details);
   var username_details = mongoose.model('discord_username', user_name_details);
   var servers = mongoose.model('discord_server', servers);
   var invites = mongoose.model('discord_invites', invites);
+  var chats = mongoose.model('discord_chats', chats);
 
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
+
+// ****************  all the functions ****************************
 
 // making transporter to send email
 var transporter = nodemailer.createTransport({
@@ -164,7 +183,6 @@ var transporter = nodemailer.createTransport({
   }
 });
 
-// this function is for sending mail
 function send_mail(otp,mail_value,name_value){
   var mailOptions = {
     from: process.env.user,
@@ -312,380 +330,29 @@ function generatetag(count_value){
   return final_str;
 }
 
-const authToken = async(req,res,next)=>{
-  try {
-    const authHeader = req.headers['x-auth-token']
-    const verified = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-    next()
-    
-  } catch (err) {
-    res.status(400).json({message:'not right',status:400});
-  }
-}
+// **************** server functions *********************
 
-app.post('/verify_route' , authToken,(req,res) =>{
-  res.status(201).json({message:'authorized',status:201});
-})
+function add_server_to_user(id , server_details , server_role){
+  return new Promise((resolve, reject)=>{
 
-app.post('/signup',async (req,res)=>{
-  const {email , username , password, dob} = req.body
-  authorized = false;
+    const{server_name, server_pic , server_id} = server_details
 
-  let response = await signup(email,username,password,dob);
+    var update_user_details = {$push:{
+      servers:[{server_name:server_name ,server_pic:server_pic , server_role:server_role , server_id:server_id}]
+    }}
 
-  if(response.status == 204 || response.status == 400 || response.status == 202){
-    let status = response.status
-    res.status(status).json({message:response.message , status : status})
-  }
-
-  // new user
-  else if(response.message == true){
-    const otp = generateOTP();
-    let username_response = await isusername_available(username)
-    let final_tag = username_response.final_tag
-
-    // here we saved those values in the new user to be saved in database 
-    var new_user = new user({ username: username, tag: final_tag , profile_pic:process.env.default_profile_pic  , email: email,password:password, dob: dob,authorized:authorized,verification : [{
-      timestamp : Date.now(),
-      code:otp
-    }] });
-
-    // if the user doesnot exist we send a verification code to verify that the email entered is not fake 
-    send_mail(otp,email,username)
-
-    // here we saved users details
-    new_user.save(function (err_2, data_2) {
-      if (err_2) return console.error(err_2);
-      else { }
-    });
-    res.status(201).json({message:'data saved',status:201});
-  }
-
-  else if(response.message == 'not_TLE' || response.message == 'TLE_2'){
-    let username_response = isusername_available(username)
-    let tag = username_response.final_tag
-    var account_creds = { $set: { username: username, tag: tag, email: email, password: password, dob: dob,authorized:authorized} };
-    var otp = 0;
-    // username not equal and tl not exceeded
-    if(response.message == 'not_TLE'){
-      var otp = response.otp
-    }
-    
-    // username not equal and tl exceeded
-    else{
-      var otp = generateOTP()
-    }
-
-    let new_response = await updating_creds(account_creds,otp,email,username)
-    let status = new_response.status
-    res.status(status).json({message:new_response.message , status : status})
-  }
-
-  else if(response.message == 'not_TLE_2' || response.message == 'TLE'){
-    let tag = response.tag;
-    var otp = 0;
-
-    // username equal and tl not exceeded
-    if(response.message == 'not_TLE_2'){
-      var account_creds = { $set: { username: username, tag:tag, email: email, password: password, dob: dob,authorized:authorized} };
-      var otp = response.otp
-    }
-
-    // username equal and tl exceeded
-    else{
-      var otp = generateOTP()
-      var account_creds = { $set: { username: username,email: email, tag:tag,password: password, dob: dob,authorized:authorized ,verification:[{
-        timestamp:Date.now(),
-        code: otp
-      }]} };
-    }
-    
-    let new_response = await updating_creds(account_creds , otp , email , username)
-    let status = new_response.status
-    res.status(status).json({message:new_response.message , status : status})
-  }
-
-
-})
-
-app.post('/verify', function (req, res) {
-  const {email,otp} = req.body
-  // const email = req.body.email
-  // const otp = req.body.otp_value
-  user.find({email:email},function(err,data_2){
-    if(err){
-      console.log(err)
-    }
-    else{
-      console.log('verification done')
-      // if current time minus the time when user got the otp is less than 12000(2 minutes) then we check otp is correct or not
-      current_time_stamp = data_2[0].verification[0].timestamp
-      if (((Date.now())-current_time_stamp ) < 120000) {
-        if(req.body.otp_value == data_2[0].verification[0].code){
-          // here we update authorized value to true in our database so next time if someone tries to sign up with this email we can tell that user already exists
-          var new_val = { $set: { authorized: true } };
-          user.updateOne({ email: email }, new_val, function (err, result) {
-          if (err) throw err;
-          else {res.status(201).json({message:'Congrats you are verified now' , status:201})}
-          });
-        }
-        // wrong otp go back to main page
-        else{
-          console.log('incorrect')
-          res.status(432).json({error:'incorrect passowrd' , status:432})
-          }
-      }
-      // now we come to this else condition only if the current time minus the time when user got the otp is greater than 2min which is the time to expire our otp 
-      // so we change the otp now
-      else {
-        // updating time stamp value and generating new otp
-        const otp = generateOTP()
-        var new_val = { $set: { verification: [{
-          timestamp:Date.now(),
-          code:otp
-        }]}};
-        user.updateOne({ email: email }, new_val, function (err, result) {
-        if (err) throw err;
-        else {send_mail(otp,email,username)
-        console.log('otp sent again')
-        res.status(442).json({error:'otp changed' , status:442})}
-      });
-      }
-    }
-  })
-})
-
-app.post('/signin', function (req, res) {
-  // console.log(req.body.email)
-  user.find({ email: req.body.email }, function (err, data) {
-    if (data.length == 0) {
-      res.status(442).json({error:'invalid username or password',status:442})
-      console.log('invalid username or password')
-    }
-    else {
-      if (req.body.password == data[0].password) {
-          if (data[0].authorized == true) {
-            const token = jwt.sign({id:data[0].id , username:data[0].username ,tag:data[0].tag, profile_pic:data[0].profile_pic},process.env.ACCESS_TOKEN)
-            res.status(201).json({message:'you are verified',status:201 , token:token});
-            console.log('you are verified')
-          }
-          else {
-            res.status(422).json({error:'you are not verified yet',status:422});
-            console.log('you are not verified yet')
-          }
-      }
-      else {
-        res.status(442).json({error:'invalid username or password',status:442});
-        console.log('invalid username or password')
-      }
-    }
-  })
-})
-
-function check_req(ids , user_id){
-  if(ids.length!=0){
-    for(let i=0 ; i<ids.length;i++){
-      if(user_id == ids[i].id){
-        return true
-      }
+    user.updateOne({_id:id}, update_user_details , function(err,data){
+      if(err) console.log(err)
       else{
-        return false
+        resolve(true)
       }
-    }
-  }
-  else{
-    return false
-  }
-}
-
-function add_friend(user_data , friend_data){
-  const{friend_id , friend_username , friend_tag , friend_profile_pic} = friend_data
-  const {id , username , tag , profile_pic} = user_data
-
-  return new Promise((resolve,reject)=>{
-    // console.log('adding friend....')
-    let user_friends_list = { $push: {friends:[{
-      id:friend_id,
-      username: friend_username,
-      profile_pic: friend_profile_pic,
-      tag: friend_tag,
-    }]} };
-
-    let friend_friends_list = { $push: {friends:[{
-      id:id,
-      username: username,
-      profile_pic: profile_pic,
-      tag: tag,
-    }]} };
-
-      // for reciever's db delete request from incoming field
-    let delete_incoming =  { $pull: {incoming_reqs: {id:friend_id}} };
-
-    // for sender's db delete request from outgoing field
-    let delete_outgoing =  { $pull: {outgoing_reqs: {id:id}} };
-
-    let param_arr=  [user_friends_list , friend_friends_list]
-    let param_arr_2 = [delete_incoming , delete_outgoing]
-    let id_arr = [id , friend_id]
-
-    for(let i = 0 ; i<2 ; i++){
-      user.updateOne({ _id: id_arr[i] }, param_arr[i], function (err, result) {
-        if (err){
-          reject({message:'something went wrong' , status:404})
-          throw err;
-        } 
-        });
-
-      user.updateOne({_id:id_arr[i]},param_arr_2[i],function(err,result){
-        if (err){
-          reject({message:'something went wrong' , status:404})
-          console.log(err)
-        } 
-      })
-    }
-    resolve({message:'friend added' , status:200})
-  })
-}
-
-
-app.post('/add_friend',async function(req,res){
-  let friend = req.body.friend
-  let friend_length = friend.length
-  let hash_index = friend.indexOf("#");
-  if(hash_index==-1){
-    res.status(400).json({message:'Invalid Input',status:400});
-  }
-  else{
-    let name = friend.slice(0,hash_index)
-    let user_tag = friend.slice(hash_index+1,friend_length)
-    const authHeader = req.headers['x-auth-token']
-    const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-
-    const {id , username , tag , profile_pic} = user_id
-
-    const isuserexists  = new Promise((resolve,reject)=>{
-      user.find({username:name, tag:user_tag},function(err,data){
-        if(err){
-          reject(err,'something wrong in add_friend endpoint')
-        }
-        else{
-          if(data.length==0){
-            resolve(false)
-          }
-          else{
-            // console.log(data[0].incoming_reqs)
-            resolve({response:true,friend_id:data[0].id , friend_username : data[0].username , friend_tag: data[0].tag , friend_profile_pic:data[0].profile_pic , outgoing_reqs:data[0].outgoing_reqs , incoming_reqs:data[0].incoming_reqs,
-            friends:data[0].friends})
-          }
-        }
-      }).clone()
     })
-    
-    let result = await isuserexists
 
-    const{incoming_reqs , outgoing_reqs , friends , response , friend_id , friend_username , friend_tag , friend_profile_pic} = result
-    
 
-    if(response == false){
-      res.status(404).json({message:'User Not found',status:404});
-    }
-    else{
-      const friend_list = check_req(friends , id)
+  })
+}
 
-      if(friend_list == true){
-        console.log('already friends')
-        res.status(201).json({message:'You are already friends with this user',status:201});
-      }
-      else{
-        const outgoing_list = check_req(outgoing_reqs , id)
-        if(outgoing_list==true){
-          const response = await add_friend(user_id , result)
-          console.log('friends now')
-          // here we will add that user to friend list and not send the request again , this message is only for user simplicity
-          res.status(201).json({message:'Request sent successfully',status:201});
-        }
-        else{
-          const incoming_list = check_req(incoming_reqs , id)
-          if(incoming_list == true){
-            console.log('request alreay sent')
-            res.status(202).json({message:'Request already sent',status:202});
-          }
-          else{
-            let sending_req = { $push: {'incoming_reqs':[{
-              // got these after destructuring the object user_id
-              id: id,
-              username: username,
-              profile_pic: profile_pic,
-              tag: tag,
-              status:'incoming'
-            }]} };
-    
-            let sending_req_2 = { $push: {'outgoing_reqs':[{
-              id:friend_id,
-              username: friend_username,
-              profile_pic: friend_profile_pic,
-              tag: friend_tag,
-              status:'outgoing'
-            }]} };
-    
-    
-            if(response == true){
-              // this update will be done in the data of the receiveing user
-              user.updateOne({ _id: friend_id }, sending_req, function (err, result) {
-                if (err) throw err;
-                else {
-                  // console.log('request sent')
-                }
-              });
-    
-              // this update will be done in the data of the sending user
-              user.updateOne({ _id: id }, sending_req_2, function (err, result) {
-                if (err) throw err;
-              });
-            }
-            res.status(203).json({message:'Request sent successfully',status:203 , receiver_id:friend_id});
-          }
-        }
-      }
-    }
-    }
-  
-})
-
-app.get('/user_relations', async function(req,res){
-  const authHeader = req.headers['x-auth-token']
-  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-  const result = await user.find({_id:user_id.id})
-  const {incoming_reqs , outgoing_reqs , friends , servers} = result[0];
-  res.status(201).json({incoming_reqs:incoming_reqs , outgoing_reqs:outgoing_reqs , friends: friends , servers:servers});
-
-})
-
-app.post('/process_req',async function(req,res){
-  const {message , friend_data} = req.body
-  const {id , profile_pic , tag , username} = friend_data
-  final_friend_data = {friend_id:id , friend_profile_pic:profile_pic , friend_tag:tag , friend_username:username}
-  // had to transfer the friend data to final friend data because in the function add_friend i am using destructuring and keys have to be according to that
-
-  const authHeader = req.headers['x-auth-token']
-  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-  if(message == 'Accept'){
-    const result = await add_friend(user_id , final_friend_data)
-    const {message , status} = result
-    res.status(status).json({message:message , status:status});
-  }
-  else if(message == 'Ignore'){
-    console.log('will do something about ignore')
-  }
-  else if(message == 'Unblock'){
-    console.log('will do something about Unblock')
-  }
-  else if(message == 'Cancel'){
-    console.log('will do something about Cancel')
-  }
-})
-
-function template(user_details , server_details){
+function template(user_details , server_details){``
   return new Promise((resolve,reject)=>{
     const {name , type , image  , key , role} = server_details
     const {id , username , tag , profile_pic} = user_details
@@ -831,85 +498,59 @@ function template(user_details , server_details){
   
 }
 
-function add_server_to_user(id , server_details , server_role){
-  return new Promise((resolve, reject)=>{
+function add_user_to_server(user_details , server_id){
+  const {username , tag , id , profile_pic} = user_details
 
-    const{server_name, server_pic , server_id} = server_details
+ return new Promise((resolve,reject)=>{
 
-    var update_user_details = {$push:{
-      servers:[{server_name:server_name ,server_pic:server_pic , server_role:server_role , server_id:server_id}]
-    }}
+   // for appending in user details
+   let new_user_to_server = { $push: {users:[{
+    user_name:username,
+    user_profile_pic:profile_pic,
+    user_tag: tag,
+    user_role:'member'
+  }]} };
 
-    user.updateOne({_id:id}, update_user_details , function(err,data){
-      if(err) console.log(err)
-      else{
+  servers.updateOne({_id:server_id} ,new_user_to_server , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
         resolve(true)
       }
+    }
+  })
+  
+ })
+}
+
+function check_server_in_user(id,server_id){
+  return new Promise((resolve,reject)=>{
+    user.aggregate([
+    {"$match" : {
+      "_id": new mongoose.Types.ObjectId(id)}} , 
+
+    {"$project":{
+
+      "servers":{
+        
+        "$filter":{
+          "input":"$servers",
+          "as":"server",
+          "cond":{"$eq":["$$server.server_id",server_id]}
+    }
+    }}}],
+    
+    function(err,data){
+      if(err) console.log(err)
+      else{
+        resolve(data)
+        
+      }
     })
-
-
   })
 }
 
-app.post('/create_server',  async function(req,res){
-  const {name , type , image  , key , role} = req.body.server_details
-  const authHeader = req.headers['x-auth-token']
-  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-
-  // create a server in the servers collection
-  const server_template = await template(user_id , req.body.server_details)
-
-  // adds server details in user document
-  const add_server = await add_server_to_user(user_id.id , server_template , role)
-  
-
-  if(add_server==true){
-    res.json({status:200 , message:'Server Created'})
-  }
-  else{
-    res.json({status:500 , message:'Somethig Went Wrong'})
-  }
-})
-
-
-
-app.post('/server_info' , async function(req,res){
-  const server_id = req.body.server_id
-  const server_info = await servers.find({_id:new mongoose.Types.ObjectId(server_id) })
-  res.json(server_info)
-})
-
-app.post('/add_new_channel' , async function(req,res){
-  const {category_id , channel_name , channel_type , server_id} = req.body
-  var new_channel = {$push:{'categories.$.channels':{channel_name:channel_name , channel_type:channel_type}
-  }}
-
-  servers.updateOne({_id:new mongoose.Types.ObjectId(server_id) , 'categories._id':new mongoose.Types.ObjectId(category_id)} , new_channel,  function(err,data){
-    if(err) console.log(err)
-    else{
-      if(data.modifiedCount>0){
-        res.json({status:200})
-      }
-    }
-  })
-})
-
-
-app.post('/add_new_category', async function(req,res){
-  const {category_name , server_id} = req.body
-  var new_category = {$push:{'categories':{category_name:category_name , channels:[]}
-  }}
-
-  servers.updateOne({_id:new mongoose.Types.ObjectId(server_id)} , new_category , function(err,data){
-    if(err) console.log(err)
-    else{
-      if(data.modifiedCount>0){
-        res.json({status:200})
-      }
-    }
-  })
-
-})
+// ************* invite function **********************
 
 function check_invite_link(inviter_id , server_id){
   return new Promise((resolve,reject)=>{
@@ -937,6 +578,492 @@ function check_invite_link(inviter_id , server_id){
     })
   })
 }
+
+// ************** Friend request functions*******************
+
+function check_req(ids , user_id){
+  if(ids.length!=0){
+    for(let i=0 ; i<ids.length;i++){
+      if(user_id == ids[i].id){
+        return true
+      }
+      else{
+        return false
+      }
+    }
+  }
+  else{
+    return false
+  }
+}
+
+function add_friend(user_data , friend_data){
+  const{friend_id , friend_username , friend_tag , friend_profile_pic} = friend_data
+  const {id , username , tag , profile_pic} = user_data
+
+  return new Promise((resolve,reject)=>{
+    // console.log('adding friend....')
+    let user_friends_list = { $push: {friends:[{
+      id:friend_id,
+      username: friend_username,
+      profile_pic: friend_profile_pic,
+      tag: friend_tag,
+    }]} };
+
+    let friend_friends_list = { $push: {friends:[{
+      id:id,
+      username: username,
+      profile_pic: profile_pic,
+      tag: tag,
+    }]} };
+
+      // for reciever's db delete request from incoming field
+    let delete_incoming =  { $pull: {incoming_reqs: {id:friend_id}} };
+
+    // for sender's db delete request from outgoing field
+    let delete_outgoing =  { $pull: {outgoing_reqs: {id:id}} };
+
+    let param_arr=  [user_friends_list , friend_friends_list]
+    let param_arr_2 = [delete_incoming , delete_outgoing]
+    let id_arr = [id , friend_id]
+
+    for(let i = 0 ; i<2 ; i++){
+      user.updateOne({ _id: id_arr[i] }, param_arr[i], function (err, result) {
+        if (err){
+          reject({message:'something went wrong' , status:404})
+          throw err;
+        } 
+        });
+
+      user.updateOne({_id:id_arr[i]},param_arr_2[i],function(err,result){
+        if (err){
+          reject({message:'something went wrong' , status:404})
+          console.log(err)
+        } 
+      })
+    }
+    resolve({message:'friend added' , status:200})
+  })
+}
+
+// ************** chat functions*******************
+function create_chat(server_id){
+  return new Promise((resolve,reject)=>{
+    var add_chats = new chats({
+      server_id:server_id,
+    });
+    
+    // here we create a new chat document
+    add_chats.save(function (err, data) {
+      if (err) return console.error(err);
+      else {
+        console.log('new chat created')
+        resolve({status:200})
+      }
+    });
+  })
+}
+
+function get_chats(server_id,channel_id){
+  return new Promise((resolve,reject)=>{
+    chats.aggregate([
+      {"$match" : {
+        "server_id": server_id}} , 
+  
+      {"$project":{
+  
+        "channels":{
+          
+          "$filter":{
+            "input":"$channels",
+            "as":"channel",
+            "cond":{"$eq":["$$channel.channel_id",channel_id]}
+      }
+      }}}],
+      
+      function(err,data){
+        if(err) console.log(err)
+        else{
+          resolve(data)
+        }
+      })
+  })
+}
+
+// ************** auth function******************
+
+const authToken = async(req,res,next)=>{
+  try {
+    const authHeader = req.headers['x-auth-token']
+    const verified = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+    next()
+    
+  } catch (err) {
+    res.status(400).json({message:'not right',status:400});
+  }
+}
+
+app.post('/verify_route' , authToken,(req,res) =>{
+  res.status(201).json({message:'authorized',status:201});
+})
+
+app.post('/signup',async (req,res)=>{
+  const {email , username , password, dob} = req.body
+  authorized = false;
+
+  let response = await signup(email,username,password,dob);
+
+  if(response.status == 204 || response.status == 400 || response.status == 202){
+    let status = response.status
+    res.status(status).json({message:response.message , status : status})
+  }
+
+  // new user
+  else if(response.message == true){
+    const otp = generateOTP();
+    let username_response = await isusername_available(username)
+    let final_tag = username_response.final_tag
+
+    // here we saved those values in the new user to be saved in database 
+    var new_user = new user({ username: username, tag: final_tag , profile_pic:process.env.default_profile_pic  , email: email,password:password, dob: dob,authorized:authorized,verification : [{
+      timestamp : Date.now(),
+      code:otp
+    }] });
+
+    // if the user doesnot exist we send a verification code to verify that the email entered is not fake 
+    send_mail(otp,email,username)
+
+    // here we saved users details
+    new_user.save(function (err_2, data_2) {
+      if (err_2) return console.error(err_2);
+      else { }
+    });
+    res.status(201).json({message:'data saved',status:201});
+  }
+
+  else if(response.message == 'not_TLE' || response.message == 'TLE_2'){
+    let username_response = isusername_available(username)
+    let tag = username_response.final_tag
+    var account_creds = { $set: { username: username, tag: tag, email: email, password: password, dob: dob,authorized:authorized} };
+    var otp = 0;
+    // username not equal and tl not exceeded
+    if(response.message == 'not_TLE'){
+      var otp = response.otp
+    }
+    
+    // username not equal and tl exceeded
+    else{
+      var otp = generateOTP()
+    }
+
+    let new_response = await updating_creds(account_creds,otp,email,username)
+    let status = new_response.status
+    res.status(status).json({message:new_response.message , status : status})
+  }
+
+  else if(response.message == 'not_TLE_2' || response.message == 'TLE'){
+    let tag = response.tag;
+    var otp = 0;
+
+    // username equal and tl not exceeded
+    if(response.message == 'not_TLE_2'){
+      var account_creds = { $set: { username: username, tag:tag, email: email, password: password, dob: dob,authorized:authorized} };
+      var otp = response.otp
+    }
+
+    // username equal and tl exceeded
+    else{
+      var otp = generateOTP()
+      var account_creds = { $set: { username: username,email: email, tag:tag,password: password, dob: dob,authorized:authorized ,verification:[{
+        timestamp:Date.now(),
+        code: otp
+      }]} };
+    }
+    
+    let new_response = await updating_creds(account_creds , otp , email , username)
+    let status = new_response.status
+    res.status(status).json({message:new_response.message , status : status})
+  }
+
+
+})
+
+app.post('/verify', function (req, res) {
+  const {email,otp} = req.body
+
+  user.find({email:email},function(err,data_2){
+    if(err){
+      console.log(err)
+    }
+    else{
+      console.log('verification done')
+      // if current time minus the time when user got the otp is less than 12000(2 minutes) then we check otp is correct or not
+      current_time_stamp = data_2[0].verification[0].timestamp
+      if (((Date.now())-current_time_stamp ) < 120000) {
+        if(req.body.otp_value == data_2[0].verification[0].code){
+          // here we update authorized value to true in our database so next time if someone tries to sign up with this email we can tell that user already exists
+          var new_val = { $set: { authorized: true } };
+          user.updateOne({ email: email }, new_val, function (err, result) {
+          if (err) throw err;
+          else {res.status(201).json({message:'Congrats you are verified now' , status:201})}
+          });
+        }
+        // wrong otp go back to main page
+        else{
+          console.log('incorrect')
+          res.status(432).json({error:'incorrect passowrd' , status:432})
+          }
+      }
+      // now we come to this else condition only if the current time minus the time when user got the otp is greater than 2min which is the time to expire our otp 
+      // so we change the otp now
+      else {
+        // updating time stamp value and generating new otp
+        const otp = generateOTP()
+        var new_val = { $set: { verification: [{
+          timestamp:Date.now(),
+          code:otp
+        }]}};
+        user.updateOne({ email: email }, new_val, function (err, result) {
+        if (err) throw err;
+        else {send_mail(otp,email,username)
+        console.log('otp sent again')
+        res.status(442).json({error:'otp changed' , status:442})}
+      });
+      }
+    }
+  })
+})
+
+app.post('/signin', function (req, res) {
+  // console.log(req.body.email)
+  user.find({ email: req.body.email }, function (err, data) {
+    if (data.length == 0) {
+      res.status(442).json({error:'invalid username or password',status:442})
+      console.log('invalid username or password')
+    }
+    else {
+      if (req.body.password == data[0].password) {
+          if (data[0].authorized == true) {
+            const token = jwt.sign({id:data[0].id , username:data[0].username ,tag:data[0].tag, profile_pic:data[0].profile_pic},process.env.ACCESS_TOKEN)
+            res.status(201).json({message:'you are verified',status:201 , token:token});
+            console.log('you are verified')
+          }
+          else {
+            res.status(422).json({error:'you are not verified yet',status:422});
+            console.log('you are not verified yet')
+          }
+      }
+      else {
+        res.status(442).json({error:'invalid username or password',status:442});
+        console.log('invalid username or password')
+      }
+    }
+  })
+})
+
+app.post('/add_friend',async function(req,res){
+  let friend = req.body.friend
+  let friend_length = friend.length
+  let hash_index = friend.indexOf("#");
+  if(hash_index==-1){
+    res.status(400).json({message:'Invalid Input',status:400});
+  }
+  else{
+    let name = friend.slice(0,hash_index)
+    let user_tag = friend.slice(hash_index+1,friend_length)
+    const authHeader = req.headers['x-auth-token']
+    const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+    const {id , username , tag , profile_pic} = user_id
+
+    const isuserexists  = new Promise((resolve,reject)=>{
+      user.find({username:name, tag:user_tag},function(err,data){
+        if(err){
+          reject(err,'something wrong in add_friend endpoint')
+        }
+        else{
+          if(data.length==0){
+            resolve(false)
+          }
+          else{
+            // console.log(data[0].incoming_reqs)
+            resolve({response:true,friend_id:data[0].id , friend_username : data[0].username , friend_tag: data[0].tag , friend_profile_pic:data[0].profile_pic , outgoing_reqs:data[0].outgoing_reqs , incoming_reqs:data[0].incoming_reqs,
+            friends:data[0].friends})
+          }
+        }
+      }).clone()
+    })
+    
+    let result = await isuserexists
+
+    const{incoming_reqs , outgoing_reqs , friends , response , friend_id , friend_username , friend_tag , friend_profile_pic} = result
+    
+
+    if(response == false){
+      res.status(404).json({message:'User Not found',status:404});
+    }
+    else{
+      const friend_list = check_req(friends , id)
+
+      if(friend_list == true){
+        console.log('already friends')
+        res.status(201).json({message:'You are already friends with this user',status:201});
+      }
+      else{
+        const outgoing_list = check_req(outgoing_reqs , id)
+        if(outgoing_list==true){
+          const response = await add_friend(user_id , result)
+          console.log('friends now')
+          // here we will add that user to friend list and not send the request again , this message is only for user simplicity
+          res.status(201).json({message:'Request sent successfully',status:201});
+        }
+        else{
+          const incoming_list = check_req(incoming_reqs , id)
+          if(incoming_list == true){
+            console.log('request alreay sent')
+            res.status(202).json({message:'Request already sent',status:202});
+          }
+          else{
+            let sending_req = { $push: {'incoming_reqs':[{
+              // got these after destructuring the object user_id
+              id: id,
+              username: username,
+              profile_pic: profile_pic,
+              tag: tag,
+              status:'incoming'
+            }]} };
+    
+            let sending_req_2 = { $push: {'outgoing_reqs':[{
+              id:friend_id,
+              username: friend_username,
+              profile_pic: friend_profile_pic,
+              tag: friend_tag,
+              status:'outgoing'
+            }]} };
+    
+    
+            if(response == true){
+              // this update will be done in the data of the receiveing user
+              user.updateOne({ _id: friend_id }, sending_req, function (err, result) {
+                if (err) throw err;
+                else {
+                  // console.log('request sent')
+                }
+              });
+    
+              // this update will be done in the data of the sending user
+              user.updateOne({ _id: id }, sending_req_2, function (err, result) {
+                if (err) throw err;
+              });
+            }
+            res.status(203).json({message:'Request sent successfully',status:203 , receiver_id:friend_id});
+          }
+        }
+      }
+    }
+    }
+  
+})
+
+app.get('/user_relations', async function(req,res){
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+  const result = await user.find({_id:user_id.id})
+  const {incoming_reqs , outgoing_reqs , friends , servers} = result[0];
+  res.status(201).json({incoming_reqs:incoming_reqs , outgoing_reqs:outgoing_reqs , friends: friends , servers:servers});
+
+})
+
+app.post('/process_req',async function(req,res){
+  const {message , friend_data} = req.body
+  const {id , profile_pic , tag , username} = friend_data
+  final_friend_data = {friend_id:id , friend_profile_pic:profile_pic , friend_tag:tag , friend_username:username}
+  // had to transfer the friend data to final friend data because in the function add_friend i am using destructuring and keys have to be according to that
+
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+  if(message == 'Accept'){
+    const result = await add_friend(user_id , final_friend_data)
+    const {message , status} = result
+    res.status(status).json({message:message , status:status});
+  }
+  else if(message == 'Ignore'){
+    console.log('will do something about ignore')
+  }
+  else if(message == 'Unblock'){
+    console.log('will do something about Unblock')
+  }
+  else if(message == 'Cancel'){
+    console.log('will do something about Cancel')
+  }
+})
+
+app.post('/create_server',  async function(req,res){
+  const {name , type , image  , key , role} = req.body.server_details
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+  // create a server in the servers collection
+  const server_template = await template(user_id , req.body.server_details)
+
+  // create a chat collection 
+  const add_new_chat = await create_chat(server_template.server_id)
+
+  if(add_new_chat.status==200){
+    // adds server details in user document
+    const add_server = await add_server_to_user(user_id.id , server_template , role)
+  
+    if(add_server==true){
+      res.json({status:200 , message:'Server Created'})
+    }
+    else{
+      res.json({status:500 , message:'Somethig Went Wrong'})
+    }
+  }
+
+  else{
+    res.json({status:500 , message:'Somethig Went Wrong'})
+  }
+
+  
+})
+
+app.post('/server_info' , async function(req,res){
+  const server_id = req.body.server_id
+  const server_info = await servers.find({_id:new mongoose.Types.ObjectId(server_id) })
+  res.json(server_info)
+})
+
+app.post('/add_new_channel' , function(req,res){
+  const {category_id , channel_name , channel_type , server_id} = req.body
+  var new_channel = {$push:{'categories.$.channels':{channel_name:channel_name , channel_type:channel_type}
+  }}
+
+  servers.updateOne({_id:new mongoose.Types.ObjectId(server_id) , 'categories._id':new mongoose.Types.ObjectId(category_id)} , new_channel,  function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        res.json({status:200})
+      }
+    }
+  })
+})
+
+app.post('/add_new_category', function(req,res){
+  const {category_name , server_id} = req.body
+  var new_category = {$push:{'categories':{category_name:category_name , channels:[]}
+  }}
+
+  servers.updateOne({_id:new mongoose.Types.ObjectId(server_id)} , new_category , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        res.json({status:200})
+      }
+    }
+  })
+
+})
 
 app.post('/create_invite_link' , async function(req,res){
   const {inviter_name , inviter_id,  server_name , server_id , server_pic} = req.body
@@ -1001,58 +1128,6 @@ app.post('/invite_link_info' , function(req,res){
   })
 })
 
-function add_user_to_server(user_details , server_id){
-  const {username , tag , id , profile_pic} = user_details
-
- return new Promise((resolve,reject)=>{
-
-   // for appending in user details
-   let new_user_to_server = { $push: {users:[{
-    user_name:username,
-    user_profile_pic:profile_pic,
-    user_tag: tag,
-    user_role:'member'
-  }]} };
-
-  servers.updateOne({_id:server_id} ,new_user_to_server , function(err,data){
-    if(err) console.log(err)
-    else{
-      if(data.modifiedCount>0){
-        resolve(true)
-      }
-    }
-  })
-  
- })
-}
-
-function check_server_in_user(id,server_id){
-  return new Promise((resolve,reject)=>{
-    user.aggregate([
-    {"$match" : {
-      "_id": new mongoose.Types.ObjectId(id)}} , 
-
-    {"$project":{
-
-      "servers":{
-        
-        "$filter":{
-          "input":"$servers",
-          "as":"server",
-          "cond":{"$eq":["$$server.server_id",server_id]}
-    }
-    }}}],
-    
-    function(err,data){
-      if(err) console.log(err)
-      else{
-        resolve(data)
-        
-      }
-    })
-  })
-}
-
 app.post('/accept_invite' , async function(req,res){
   const {user_details , server_details} = req.body
   const {username , tag , id , profile_pic} = user_details
@@ -1080,7 +1155,115 @@ app.post('/accept_invite' , async function(req,res){
     console.log('user is already in server')
     res.json({status:403})
   }
+  
+})
 
+app.post('/delete_server' , function(req,res){
+  const server_id = req.body.server_id
+
+  var delete_server = { $set: {active:false}}
+
+  servers.updateOne({_id:server_id , delete_server , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        console.log('deleted the server')
+        res.json({satus:200})
+      }
+    }
+  }})
+
+})
+
+app.post('/leave_server' , function(req,res){
+  const server_id = req.body.server_id
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+
+  var leave_server = { $pull: {servers:[{server_id:server_id}]}}
+
+  user.updateOne({_id:user_id.id , leave_server , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        console.log('left the server')
+      }
+    }
+  }})
+
+})
+
+app.post('/store_message' ,async function(req,res){
+  const{message ,server_id, channel_id , channel_name , timestamp , username , tag , id , profile_pic} = req.body
+  console.log(channel_name , channel_id)
+
+  const response = await chats.find({server_id:server_id, 'channels.channel_id':channel_id})
+
+  if(response.length==0){
+      var push_new_channel = {$push:{channels:[{
+        channel_id:channel_id,
+        channel_name:channel_name,
+        chat_details:[{
+          content:message,
+          sender_id:id,
+          sender_name:username,
+          sender_pic:profile_pic,
+          sender_tag:tag,
+          timestamp:timestamp,
+        }]
+      }]}}
+
+      chats.updateOne({server_id:server_id} , push_new_channel , function(err , data){
+        if(err) console.log(err)
+        else{
+          console.log(data)
+          if(data.modifiedCount>0){
+            console.log('channel added in chat')
+            res.json({status:200})
+          }
+        }
+      })
+
+  }
+
+  else{
+
+      var push_new_chat = {$push:{
+        'channels.$.chat_details':[{
+          content:message,
+          sender_id:id,
+          sender_name:username,
+          sender_pic:profile_pic,
+          sender_tag:tag,
+          timestamp:timestamp
+          }]
+      }}
+
+      // > db.demo710.find().sort({$natural:-1});  return the output in oppposite order
+      chats.updateOne({'channels.channel_id':channel_id} , push_new_chat , function(err , data){
+        if(err) console.log(err)
+        else{
+          if(data.modifiedCount>0){
+            console.log('chat added')
+            res.json({status:200})
+          }
+        }
+      })
+
+  }
   
+})
+
+app.post('/get_messages' , async function(req,res){
+  const {channel_id, server_id} = req.body
+
+  let response = await get_chats(server_id , channel_id)
   
+  if(response[0].channels.length!=0){
+    res.json({chats:response[0].channels[0].chat_details})
+  }
+  else{
+    res.json({chats:[]})
+  }
 })

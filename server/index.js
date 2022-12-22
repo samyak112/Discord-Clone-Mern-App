@@ -46,13 +46,6 @@ io.on("connection", (socket) => {
     socket.to(channel_id).emit('recieve_message',{message_data:{message , timestamp , sender_name , sender_tag , sender_pic}})
   })
 
-  socket.on('vc_joined' , (joining_details)=>{
-    const {user_id ,username ,  profile_pic , channel_id} = joining_details
-    socket.join(channel_id)
-    socket.to(channel_id).emit('new_user_joined' , {new_user_details:{user_id , username , profile_pic}})
-  })
-  
-  
 });
 
 // mogoose config
@@ -374,7 +367,8 @@ function template(user_details , server_details , image){``
           user_name: username,
           user_profile_pic: profile_pic,
           user_tag: tag,
-          user_role:role
+          user_role:role,
+          user_id:id
         }],
         categories:[{
           category_name:'Text Channels',
@@ -410,7 +404,8 @@ function template(user_details , server_details , image){``
           user_name: username,
           user_profile_pic: profile_pic,
           user_tag: tag,
-          user_role:role
+          user_role:role,
+          user_id:id
         }],
         categories:[{
           category_name:'INFORMATION',
@@ -473,7 +468,8 @@ function template(user_details , server_details , image){``
           user_name: username,
           user_profile_pic: profile_pic,
           user_tag: tag,
-          user_role:role
+          user_role:role,
+          user_id:id
         }],
         categories:[{
           category_name:'Text Channels',
@@ -515,7 +511,8 @@ function add_user_to_server(user_details , server_id){
     user_name:username,
     user_profile_pic:profile_pic,
     user_tag: tag,
-    user_role:'member'
+    user_role:'member',
+    user_id:id
   }]} };
 
   servers.updateOne({_id:server_id} ,new_user_to_server , function(err,data){
@@ -1170,34 +1167,59 @@ app.post('/delete_server' , function(req,res){
 
   var delete_server = { $set: {active:false}}
 
-  servers.updateOne({_id:server_id , delete_server , function(err,data){
+  servers.updateOne({_id:server_id} , delete_server, function(err,data){
     if(err) console.log(err)
     else{
       if(data.modifiedCount>0){
-        console.log('deleted the server')
-        res.json({satus:200})
+        console.log('deleted the server from servers')
       }
     }
-  }})
+  })
+
+  var delete_server_from_user = { $pull: {servers:{server_id:server_id}}}
+
+  user.updateMany({'servers.server_id':server_id} ,delete_server_from_user , function(err,data){
+    if(err) console.log(err)
+    else{
+      if(data.modifiedCount>0){
+        console.log('deleted the server from userss')
+        res.json({status:200})
+      }
+    }
+  } )
 
 })
 
 app.post('/leave_server' , function(req,res){
+  console.log('enterd in leave')
   const server_id = req.body.server_id
   const authHeader = req.headers['x-auth-token']
   const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
 
 
-  var leave_server = { $pull: {servers:[{server_id:server_id}]}}
+  var leave_server = { $pull: {servers:{server_id:server_id}}}
 
-  user.updateOne({_id:user_id.id , leave_server , function(err,data){
+  user.updateOne({_id:user_id.id} , leave_server , function(err,data){
+    if(err) console.log(err)
+    else{
+      console.log(data)
+      if(data.modifiedCount>0){
+        console.log('deleted server from user')
+      }
+    }
+  })
+
+  var delete_user_from_server = { $pull: {users:{user_id:user_id.id}}}
+
+  servers.updateOne({_id:server_id} , delete_user_from_server , function(err,data){
     if(err) console.log(err)
     else{
       if(data.modifiedCount>0){
-        console.log('left the server')
+        console.log('deleted user from server')
+        res.json({status:200})
       }
     }
-  }})
+  } )
 
 })
 

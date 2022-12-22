@@ -24,16 +24,6 @@ function Server_details({new_req_recieved,elem}) {
     const [channel_creation_progess, setchannel_creation_progess] = useState({text:'Create Channel' , disabled:false})
     const {server_id} = useParams()
 
-    // user details from redux
-   const username = useSelector(state => state.user_info.username)
-   const tag = useSelector(state => state.user_info.tag)
-   const profile_pic = useSelector(state => state.user_info.profile_pic)
-   const id = useSelector(state => state.user_info.id)
-
-   socket.on('new_user_joined' ,new_user_details=>{
-    console.log(new_user_details)
-})
-
     const handleChange = (event) => {
       setSelectedValue(event.target.value);
     };
@@ -76,9 +66,6 @@ function Server_details({new_req_recieved,elem}) {
       if(channel_type=='text'){
         dispatch(change_page_name(channel_name))
         dispatch(change_page_id(channel_id))
-      }
-      else{
-        socket.emit('vc_joined' , {joining_details:{user_id:id , username:username , profile_pic:profile_pic , channel_id:channel_id}})
       }
     }
 

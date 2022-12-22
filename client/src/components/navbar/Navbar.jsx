@@ -62,8 +62,11 @@ function Navbar({new_req_recieved ,user_cred}) {
   const create_server = async()=>{
 
     let image_url = ''
-    const file_url = await uploadFileToBlob(new_server_image);
-    image_url = file_url
+    if(new_server_image!=''){
+      const file_url = await uploadFileToBlob(new_server_image);
+      image_url = file_url
+    }
+    
     
     const res = await fetch(`${url}/create_server`,{
       method:'POST',

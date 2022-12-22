@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom';
+import {useNavigate, useParams } from 'react-router-dom';
 import valid_css from '../navbar_2_chat_valid/valid_navbar.module.css'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Server_details from '../server_details/Server_details';
@@ -13,19 +13,23 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import Modal from 'react-bootstrap/Modal';
 import Typography from '@mui/material/Typography';
 import Skeleton from '@mui/material/Skeleton';
+import {update_options} from '../../../Redux/options_slice'
+
+
 
 
 function Navbar2_chat_valid() {
   const url = process.env.REACT_APP_URL
   const {server_id} = useParams();
+  const Navigate = useNavigate();
 
    // user details from redux
    const username = useSelector(state => state.user_info.username)
-   const tag = useSelector(state => state.user_info.tag)
-   const profile_pic = useSelector(state => state.user_info.profile_pic)
    const id = useSelector(state => state.user_info.id)
  
    const front_end_url = process.env.REACT_APP_front_end_url
+
+   const page_id = useSelector(state => state.current_page.page_id)
  
    // add channel modal states
    const [show, setShow] = useState(false);
@@ -45,14 +49,12 @@ function Navbar2_chat_valid() {
  
    const [show_options, setshow_options] = useState('none')
    const [server_details, setserver_details] = useState([])
-   const page_id = useSelector(state => state.current_page.page_id)
    const server_role = useSelector(state => state.current_page.role)
    const dispatch = useDispatch()
-   const option_state = useSelector(state => state.selected_option.updated_options)
    const [new_category_name, setnew_category_name] = useState('')
    const [category_creation_progress, setcategory_creation_progress] = useState({text:'Create Category' , disabled:false})
    const [invite_link, setinvite_link] = useState('')
-   
+
 
    useEffect(()=>{
     setinvite_link('')
@@ -83,6 +85,7 @@ function Navbar2_chat_valid() {
    }
  
    const delete_server = async()=>{
+    console.log(server_id)
      const res = await fetch(`${url}/delete_server`,{
        method:'POST',
        headers:{
@@ -93,13 +96,16 @@ function Navbar2_chat_valid() {
            server_id
        }),
    })
-   const data = await res.json();
-   if(data.status==200){
-     console.log('server deleted')
-   }
+    const data = await res.json();
+    if(data.status==200){
+      dispatch(update_options())
+      Navigate('/channels/@me')
+      console.log('server deleted')
+    }
    }
  
    const leave_server = async()=>{
+    console.log(server_id)
      const res = await fetch(`${url}/leave_server`,{
        method:'POST',
        headers:{
@@ -111,7 +117,11 @@ function Navbar2_chat_valid() {
        }),
    })
    const data = await res.json();
-   }
+   if(data.status==200){
+    dispatch(update_options())
+    Navigate('/channels/@me')
+  }
+  }
  
  
    function change_options_visibility(){
@@ -137,10 +147,11 @@ function Navbar2_chat_valid() {
      })
      const data = await res.json();
      setserver_details(data[0])
-     
-     dispatch(change_page_name(data[0].categories[0].channels[0].channel_name))
-     dispatch(change_page_id(data[0].categories[0].channels[0]._id))
-     dispatch(server_members(data[0].users))
+
+      dispatch(change_page_name(data[0].categories[0].channels[0].channel_name))
+      dispatch(change_page_id(data[0].categories[0].channels[0]._id))
+      dispatch(server_members(data[0].users))
+           
    };
  
    const create_category = async() => {
@@ -189,7 +200,7 @@ function Navbar2_chat_valid() {
                 <div className={valid_css.options_comps}>Delete Server</div>
                 <div className={valid_css.options_comps}><DeleteForeverIcon fontSize='small'></DeleteForeverIcon></div>
               </div>:
-              <div className={valid_css.options} style={{color:'#e7625f'}}>
+              <div className={valid_css.options} onClick={leave_server} style={{color:'#e7625f'}}>
                 
                 <div className={valid_css.options_comps}>Leave Server</div>
                 <div className={valid_css.options_comps}><LogoutIcon fontSize='small'></LogoutIcon></div>

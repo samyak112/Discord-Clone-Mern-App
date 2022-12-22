@@ -41,14 +41,10 @@ Database -
     1. School Club
     2. Custom Server
     3. Gaming Server   
+- [x] Add a profile pic for server
 - [x] Create more Channels and categories in exisiting servers
 - [x] Invite people to Server
     1. Kept in mind that if a user is already in the server it shouldn't add again
 - [x] Chat on Servers
 - [x] Server Roles - 'Creator' and 'Member'
 - [x] An auth to check if a user is allowed in a particular server or not if he/she gets the url of that server somehow and try to enter in it directly
-
-
-# Upcoming Features:-
-- [ ] Video chat and audio chat
-- [ ] Change Profile pic and Server pic

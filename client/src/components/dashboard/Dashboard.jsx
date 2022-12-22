@@ -19,14 +19,12 @@ function Dashboard() {
   const url = process.env.REACT_APP_URL
   const server_exists = useSelector(state => state.current_page.server_exists)
 
-
   let token1 = localStorage.getItem('token')
   let user_creds = jwt(token1);
   const{username , tag, profile_pic,id} = user_creds
   const [user_data, setuser_data] = useState({incoming_reqs:'', outgoing_reqs:'', friends:'' , servers:''})
   const [status, setstatus] = useState({pending_status:false , online_status:false , all_friends_status:false , blocked_staus:false})
   const [new_req, setnew_req] = useState(1)
-
 
   const new_req_recieved = (new_req_value) =>{
     setnew_req(new_req+new_req_value)
@@ -69,9 +67,7 @@ function Dashboard() {
     dispatch(option_user_id(id))
   },[])
 
-
   // this use effect will run once and after that it will run whenever there is some change in requests like accept or denied or something
-
   
     const user_relations = async() => {
       const res = await fetch(`${url}/user_relations`,{
@@ -107,13 +103,12 @@ function Dashboard() {
      };
 
   return (
-    
     <div className={dashboardcss.main} style={{"gridTemplateColumns":grid_layout}}>
         <div className={dashboardcss.components} id={dashboardcss.component_1}><Navbar user_cred={{username:username , user_servers:user_data.servers}} new_req_recieved = {new_req_recieved} /></div>
         <div className={dashboardcss.components} id={dashboardcss.component_2}><Navbar_2/></div>
         {
           server_exists==false?
-          <div style={{gridArea: '1 / 3 / 6 / 5'}} className={dashboardcss.components} id={dashboardcss.component_4}><Main
+          <div style={{gridArea: '1 / 3 / 6 / 6'}} className={dashboardcss.components} id={dashboardcss.component_4}><Main
             user_relations={{
             incoming_reqs:user_data.incoming_reqs,
             outgoing_reqs:user_data.outgoing_reqs, 
@@ -134,8 +129,6 @@ function Dashboard() {
             <div className={dashboardcss.components}  id={dashboardcss.component_5}><Right_nav/></div>
         </>
         }
-        
-      
     </div>
   )
 }

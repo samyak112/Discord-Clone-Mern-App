@@ -89,10 +89,10 @@ const accept_invite = async()=>{
                 <div className={invitecss.invite_box_comps} id={invitecss.comp_3}>
                     <div className={invitecss.server_details} id={invitecss.server_icon}>
                         {
-                            invite_details.server_image==''?
+                            invite_details.server_pic==''?
                             invite_details.server_name[0]
                             :
-                            <img src={invite_details.server_image} alt="" />
+                            <img className={invitecss.actual_image} src={invite_details.server_pic} alt="" />
                         }
                     </div>
                     <div className={invitecss.server_details}>{invite_details.server_name}</div>
@@ -112,7 +112,7 @@ const accept_invite = async()=>{
                             <div className={invitecss.dot} style={{background:'#B9BBBE'}}>     
                             </div>
                         </div>
-                        <div id={invitecss.members}>1 Online</div>
+                        <div id={invitecss.members}>1 Member</div>
                     </div>
                 </div>
                 <div className={invitecss.invite_box_comps} id={invitecss.comp_5}>

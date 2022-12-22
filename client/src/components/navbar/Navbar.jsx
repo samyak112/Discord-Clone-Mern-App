@@ -22,6 +22,8 @@ import {useDispatch } from 'react-redux'
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import {server_role} from '../../Redux/current_page'
+import uploadFileToBlob from '../azure-storage-blob.ts';
+
 
 function Navbar({new_req_recieved ,user_cred}) {
 
@@ -39,16 +41,30 @@ function Navbar({new_req_recieved ,user_cred}) {
     setShow(false)
     setcurrent_modal(1)
     setsubmit_button({create_button_state:false , back_button_state:false})
+    setnew_server_image_preview(server_input)
   };
   const handleShow = () => setShow(true);
   const template = [{text:'Create My Own' , image:server_img_1}, {text:'Gaming' , image:server_img_2}, {text:'School Club' , image:server_img_3}, {text:'Study Group' , image:server_img_4}, {text:'Friends' , image:server_img_5} , {text:'Artists & Creators' , image:server_img_6}, {text:'Local Community' , image:server_img_7}]
-  const [server_details, setserver_details] = useState({name:`${username}'s server` , type:'' , image:'' , key:0 , role:'author'})
+  const [server_details, setserver_details] = useState({name:`${username}'s server` , type:'' , key:0 , role:'author'})
   const [current_modal, setcurrent_modal] = useState(1)
   const [submit_button, setsubmit_button] = useState({create_button_state:false , back_button_state:false})
+  const [new_server_image_preview, setnew_server_image_preview] = useState(server_input)
+  const [new_server_image, setnew_server_image] = useState('')
 
   const url = process.env.REACT_APP_URL
 
+  function update_server_pic(e){
+    let file = e.target.files[0]
+    setnew_server_image_preview(URL.createObjectURL(file))
+    setnew_server_image(file)
+  }
+
   const create_server = async()=>{
+
+    let image_url = ''
+    const file_url = await uploadFileToBlob(new_server_image);
+    image_url = file_url
+    
     const res = await fetch(`${url}/create_server`,{
       method:'POST',
       headers:{
@@ -56,7 +72,7 @@ function Navbar({new_req_recieved ,user_cred}) {
           'x-auth-token' : localStorage.getItem('token'),
       },
         body:JSON.stringify({
-          server_details
+          server_details , server_image:image_url
       }),
   })
   const data = await res.json();
@@ -183,8 +199,8 @@ function Navbar({new_req_recieved ,user_cred}) {
             Give your new server a personality with a name and an icon. You can always change it later.
           </div>
           <div className={navbarcss.input_field_wrap}>
-            <label className={navbarcss.input_field} htmlFor='update_cover_pic'><img src={server_input} alt="" /></label>
-            <input type="file" id='update_cover_pic' name="image" hidden/>
+            <label className={navbarcss.input_field} htmlFor='update_cover_pic'><img src={new_server_image_preview} alt="" /></label>
+            <input onChange={update_server_pic} type="file" id='update_cover_pic' name="image" hidden/>
           </div>
 
           <div className={navbarcss.server_details}>
@@ -250,10 +266,6 @@ function Navbar({new_req_recieved ,user_cred}) {
         {
           servers.length>0?
           servers.map((elem,key)=>{
-            let server_profile = elem.server_pic
-            if(elem.server_pic==''){
-              server_profile = elem.server_name[0]
-            }
             return(
               <OverlayTrigger
                   placement="right"
@@ -263,7 +275,12 @@ function Navbar({new_req_recieved ,user_cred}) {
                   <div className={navbarcss.selected}></div>
                 </div>
                   <div className={`${navbarcss.middle}  ${navbarcss.server_middle}`}>
-                    {server_profile}
+                    {
+                      elem.server_pic==''?
+                      <>{elem.server_name[0]}</>
+                      :
+                      <img src={elem.server_pic} alt="" />
+                    }
                   </div>
                 <div className={`${navbarcss.right}`}></div>
                 </Link>

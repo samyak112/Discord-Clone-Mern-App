@@ -8,6 +8,7 @@ import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import {useDispatch} from 'react-redux'
 import { change_option,change_option_name,option_status,option_text } from '../../../Redux/options_slice';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function Topnav_dashboard({button_status}) {
 
@@ -23,15 +24,20 @@ function Topnav_dashboard({button_status}) {
 
   function buttons(message,Icon){
     return(
-      <div className={topnav_dashboardcss.right_part_icons}>
-      <OverlayTrigger
-        
+      <div className={topnav_dashboardcss.right_part_icons} onClick={()=>{
+        if(message=='Logout'){
+          localStorage.clear();     
+          window.location.reload();
+        }
+      }}>
+      <OverlayTrigger  
         placement="bottom"
         overlay={tooltips(message)}>
         {<Icon/>}
       </OverlayTrigger>
     </div>
     )
+    
 }
 
   const tooltips = (value,props) => (
@@ -72,7 +78,7 @@ function Topnav_dashboard({button_status}) {
         <div className={topnav_dashboardcss.top_nav_comps} id={topnav_dashboardcss.right_part}>
           {buttons('New Group DM' , ChatBubbleIcon)}
           {buttons('Inbox' , InboxIcon)}
-          {buttons('Help' , HelpIcon)}
+          {buttons('Logout' , LogoutIcon)}
         </div>
     </>
   )

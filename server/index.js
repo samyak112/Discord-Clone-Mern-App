@@ -45,6 +45,13 @@ io.on("connection", (socket) => {
   socket.on('send_message' , (channel_id , message , timestamp , sender_name , sender_tag , sender_pic)=>{
     socket.to(channel_id).emit('recieve_message',{message_data:{message , timestamp , sender_name , sender_tag , sender_pic}})
   })
+
+  socket.on('vc_joined' , (joining_details)=>{
+    const {user_id ,username ,  profile_pic , channel_id} = joining_details
+    socket.join(channel_id)
+    socket.to(channel_id).emit('new_user_joined' , {new_user_details:{user_id , username , profile_pic}})
+  })
+  
   
 });
 
@@ -352,9 +359,9 @@ function add_server_to_user(id , server_details , server_role){
   })
 }
 
-function template(user_details , server_details){``
+function template(user_details , server_details , image){``
   return new Promise((resolve,reject)=>{
-    const {name , type , image  , key , role} = server_details
+    const {name , type ,key , role} = server_details
     const {id , username , tag , profile_pic} = user_details
 
     let server_template = ''
@@ -999,12 +1006,12 @@ app.post('/process_req',async function(req,res){
 })
 
 app.post('/create_server',  async function(req,res){
-  const {name , type , image  , key , role} = req.body.server_details
+  const {name , type , key , role} = req.body.server_details
   const authHeader = req.headers['x-auth-token']
   const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
-
+  
   // create a server in the servers collection
-  const server_template = await template(user_id , req.body.server_details)
+  const server_template = await template(user_id , req.body.server_details ,  req.body.server_image)
 
   // create a chat collection 
   const add_new_chat = await create_chat(server_template.server_id)

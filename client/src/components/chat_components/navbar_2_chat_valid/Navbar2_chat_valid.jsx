@@ -11,12 +11,13 @@ import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Modal from 'react-bootstrap/Modal';
-import Typography, { TypographyProps } from '@mui/material/Typography';
+import Typography from '@mui/material/Typography';
 import Skeleton from '@mui/material/Skeleton';
 
 
 function Navbar2_chat_valid() {
   const url = process.env.REACT_APP_URL
+  const {server_id} = useParams();
 
    // user details from redux
    const username = useSelector(state => state.user_info.username)
@@ -38,10 +39,7 @@ function Navbar2_chat_valid() {
    const [inviteshow, setinviteshow] = useState(false);
    const handle_inviteClose = () => setinviteshow(false);
    const handle_inviteShow = () => setinviteshow(true);
- 
- 
-   const {server_id} = useParams()
- 
+  
    // this use state is triggered when we delete a server and we set it to false so that user goes back to dashboard and it value is updated by socket for other members in the server and with the fetch request to update it for the author
    // const [server_exists, setserver_exists] = useState(true)
  
@@ -54,6 +52,12 @@ function Navbar2_chat_valid() {
    const [new_category_name, setnew_category_name] = useState('')
    const [category_creation_progress, setcategory_creation_progress] = useState({text:'Create Category' , disabled:false})
    const [invite_link, setinvite_link] = useState('')
+   
+
+   useEffect(()=>{
+    setinvite_link('')
+    setshow_options('none')
+   },[server_id])
  
    const [new_req, setnew_req] = useState(1)
    const new_req_recieved = (new_req_value) =>{
@@ -61,6 +65,7 @@ function Navbar2_chat_valid() {
    }
    
    const create_invite_link = async()=>{
+    console.log('run this')
      const res = await fetch(`${url}/create_invite_link`,{
        method:'POST',
        headers:{
@@ -119,7 +124,6 @@ function Navbar2_chat_valid() {
    }
  
    const server_info = async() => {
-     
      const res = await fetch(`${url}/server_info`,{
          method:'POST',
          headers:{
@@ -281,7 +285,7 @@ function Navbar2_chat_valid() {
                   
                 </div>
                 <div id={valid_css.copy_button_wrap}>
-                  <button id={valid_css.copy_button}>Copy</button>
+                  <button id={valid_css.copy_button} onClick={()=>{navigator.clipboard.writeText(invite_link)}}>Copy</button>
                 </div>
               </div>
             </div>

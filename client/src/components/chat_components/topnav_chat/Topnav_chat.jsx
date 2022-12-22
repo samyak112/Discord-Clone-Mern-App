@@ -9,6 +9,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import { useSelector } from 'react-redux';
+import LogoutIcon from '@mui/icons-material/Logout';
+
 
 function Topnav_chat() {
 
@@ -16,7 +18,12 @@ function Topnav_chat() {
 
     function buttons(message,Icon){
         return(
-          <div className={topnav_chatcss.right_comps}>
+          <div className={topnav_chatcss.right_comps} onClick={()=>{
+            if(message=='Logout'){
+              localStorage.clear();     
+              window.location.reload();
+            }
+          }}>
           <OverlayTrigger
             
             placement="bottom"
@@ -47,7 +54,7 @@ function Topnav_chat() {
                 {buttons('Hide Member List' , PeopleAltIcon)}
                 <input placeholder='Search' type="text" />
                 {buttons('Inbox' , InboxIcon)}
-                {buttons('Help' , HelpIcon)}
+                {buttons('Logout' , LogoutIcon)}
             </div>
         </div>
     </>

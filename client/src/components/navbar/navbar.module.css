@@ -94,7 +94,7 @@
 }
 
 .server_middle:hover{
-    background-color: #5865F2;
+    /* background-color: #5865F2; */
     color: white;
 }
 
@@ -102,6 +102,12 @@
     height: 100%;
     width: 100%;
     border-radius: 50%;
+    transition: border-radius .2s;
+    object-fit: cover;
+}
+
+.middle img:hover{
+    border-radius: 15px;
 }
 
 #plus {
@@ -113,12 +119,11 @@
     color: white;
 }
 
-
-
 #direct_message img{
     height: 60%;
     width: 60%;
     border-radius: 0;
+    object-fit: fill;
     /* i had to specify border radius to be 0 here because otherwise it inherits border radius from its class i.e .middle img */
 }
 
@@ -220,9 +225,14 @@
     margin-bottom: 2rem;
 }
 
+
 .input_field img{
-    width: 5rem;
+    width: 10rem;
+    clip-path: circle();
+    object-fit: cover;
+    height: 100%;
 }
+
 
 .server_details{
     width: 90%;

@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const http = require('http')
 require('dotenv').config()
-const port = process.env.PORT || 3080;
+const port = process.env.PORT || 3090;
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken')
 const cors = require('cors')
@@ -576,6 +576,7 @@ function check_invite_link(inviter_id , server_id){
     function(err,data){
       if(err) console.log(err)
       else{
+        console.log(data)
         resolve(data)
         
       }
@@ -1034,8 +1035,19 @@ app.post('/create_server',  async function(req,res){
 
 app.post('/server_info' , async function(req,res){
   const server_id = req.body.server_id
-  const server_info = await servers.find({_id:new mongoose.Types.ObjectId(server_id) })
-  res.json(server_info)
+  const authHeader = req.headers['x-auth-token']
+  const user_id = jwt.verify(authHeader, process.env.ACCESS_TOKEN);
+
+  const response = await check_server_in_user(user_id.id ,server_id)
+
+  if(response==[]){
+    res.json({status:404 , message:'you are not authorized'})
+  }
+  else{
+    const server_info = await servers.find({_id:new mongoose.Types.ObjectId(server_id) })
+    res.json(server_info)
+  }
+  
 })
 
 app.post('/add_new_channel' , function(req,res){
@@ -1073,8 +1085,9 @@ app.post('/create_invite_link' , async function(req,res){
   const {inviter_name , inviter_id,  server_name , server_id , server_pic} = req.body
 
   let response = await check_invite_link(inviter_id , server_id)
+  console.log(response)
 
-  if(response[0].invites.length==0){
+  if(response[0].invites==null || response[0].invites.length==0){
     const timestamp = Date.now()
     const invite_code = short_id()
 

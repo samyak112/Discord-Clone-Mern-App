@@ -107,7 +107,7 @@ function Dashboard() {
         <div className={dashboardcss.components} id={dashboardcss.component_1}><Navbar user_cred={{username:username , user_servers:user_data.servers}} new_req_recieved = {new_req_recieved} /></div>
         <div className={dashboardcss.components} id={dashboardcss.component_2}><Navbar_2/></div>
         {
-          server_exists==false?
+          server_exists==false && server_id!='@me'?
           <div style={{gridArea: '1 / 3 / 6 / 6'}} className={dashboardcss.components} id={dashboardcss.component_4}><Main
             user_relations={{
             incoming_reqs:user_data.incoming_reqs,

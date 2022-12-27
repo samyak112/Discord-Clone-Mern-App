@@ -1,5 +1,7 @@
 # Discord-Clone-Mern-App
 
+Live Demo - https://discordd-clone.netlify.app
+
 Note:- Features are listed at the bottom
 
 Description -

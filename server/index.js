@@ -21,7 +21,7 @@ const server = app.listen(port, () => {
 const io = require('socket.io')(server,{
   pingTimeout:20000,
   cors:{
-    origin:"http://localhost:3000"
+    origin:"https://discordd-clone.netlify.app"
   }
 })
 
@@ -176,7 +176,7 @@ app.get('/', (req, res) => {
 
 // making transporter to send email
 var transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
   auth: {
     user: process.env.user,
     pass: process.env.password
@@ -576,7 +576,6 @@ function check_invite_link(inviter_id , server_id){
     function(err,data){
       if(err) console.log(err)
       else{
-        console.log(data)
         resolve(data)
         
       }
@@ -1085,7 +1084,6 @@ app.post('/create_invite_link' , async function(req,res){
   const {inviter_name , inviter_id,  server_name , server_id , server_pic} = req.body
 
   let response = await check_invite_link(inviter_id , server_id)
-  console.log(response)
 
   if(response[0].invites==null || response[0].invites.length==0){
     const timestamp = Date.now()

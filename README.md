@@ -1,6 +1,6 @@
 # Discord-Clone-Mern-App
 
-Live Demo - project-discord.netlify.app
+Live Demo - https://project-discord.netlify.app
 
 Video Demo - https://www.linkedin.com/posts/samyak-jain-835a66194_github-mernstackdeveloper-webdevelopment-activity-7013799589367459840-Ygux?utm_source=share&utm_medium=member_desktop
 
